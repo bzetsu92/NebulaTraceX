@@ -1,0 +1,59 @@
+{
+    "manifest_version": 3,
+    "name": "NebulaTraceX",
+    "version": "1.0.0",
+    "description": "Record user behavior, capture bugs, and export AI-ready reports in one click.",
+    "author": "bzetsu92",
+    "permissions": [
+        "activeTab",
+        "scripting",
+        "storage",
+        "tabs"
+    ],
+    "host_permissions": [
+        "<all_urls>"
+    ],
+    "background": {
+        "service_worker": "background/service-worker.js",
+        "type": "module"
+    },
+    "action": {
+        "default_popup": "popup/index.html",
+        "default_title": "NebulaTraceX"
+    },
+    "web_accessible_resources": [
+        {
+            "resources": [
+                "content/*"
+            ],
+            "matches": [
+                "<all_urls>"
+            ]
+        }
+    ],
+    "content_security_policy": {
+        "extension_pages": "script-src 'self'; object-src 'none'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https:;"
+    },
+    "browser_specific_settings": {
+        "gecko": {
+            "id": "bug-recorder@bzetsu92",
+            "strict_min_version": "109.0"
+        }
+    },
+    "commands": {
+        "toggle-recording": {
+            "description": "Toggle recording on the active tab",
+            "suggested_key": {
+                "default": "Ctrl+Shift+Y",
+                "mac": "Command+Shift+Y"
+            }
+        },
+        "capture-screenshot": {
+            "description": "Capture screenshot while recording on the active tab",
+            "suggested_key": {
+                "default": "Ctrl+Shift+S",
+                "mac": "Command+Shift+S"
+            }
+        }
+    }
+}

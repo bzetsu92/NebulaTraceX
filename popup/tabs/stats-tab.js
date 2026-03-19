@@ -17,7 +17,6 @@ export function initStatsTab() {
         });
     });
 
-    document.getElementById('btn-export-csv')?.addEventListener('click', exportCSV);
     document.getElementById('btn-clear')?.addEventListener('click', async () => {
         if (!confirm(t('stats.clear_confirm'))) return;
         await sendMsg({ type: 'CLEAR_ALL' });
@@ -228,20 +227,6 @@ function roundRect(ctx, x, y, w, h, r) {
     ctx.arcTo(x, y + h, x, y, radius);
     ctx.arcTo(x, y, x + w, y, radius);
     ctx.closePath();
-}
-
-function exportCSV() {
-    if (!_stats.length) return;
-    const header = 'Project,Hostname,Sessions,Steps,Errors\n';
-    const rows = _stats.map(r =>
-        `"${r.displayName}","${r.hostname}",${r.sessionCount},${r.stepCount},${r.errorCount}`
-    ).join('\n');
-    const blob = new Blob([header + rows], { type: 'text/csv' });
-    const a = Object.assign(document.createElement('a'), {
-        href: URL.createObjectURL(blob),
-        download: `bug-recorder-stats-${Date.now()}.csv`,
-    });
-    a.click();
 }
 
 function esc(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }

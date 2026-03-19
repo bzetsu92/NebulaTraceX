@@ -1,4 +1,4 @@
-import { DB } from './db.js';
+import { DB, openDB } from './db.js';
 
 export const Sessions = {
     async create(tabId, url) {
@@ -48,6 +48,13 @@ export const Sessions = {
 export const Steps = {
     async add(step) {
         return DB.add('steps', { ...step, timestamp: Date.now() });
+    },
+    async get(id) { return DB.get('steps', id); },
+    async update(id, patch) {
+        const existing = await DB.get('steps', id);
+        if (!existing) return null;
+        await DB.put('steps', { ...existing, ...patch });
+        return true;
     },
     async addBatch(sessionId, steps = []) {
         if (!steps.length) return;

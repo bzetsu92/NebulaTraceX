@@ -72,13 +72,27 @@ async function handleMessage(msg, sender) {
         }
 
         case 'ATTACH_SCREENSHOT': {
-            await new Promise(r => setTimeout(r, 250));
-            const allSteps = await Steps.getBySession(msg.sessionId);
+            let allSteps = [];
+            for (let i = 0; i < 3; i++) {
+                if (i > 0) await new Promise(r => setTimeout(r, 300));
+                allSteps = await Steps.getBySession(msg.sessionId);
+                if (allSteps.length > 0) break;
+            }
             if (allSteps.length > 0) {
                 const last = allSteps[allSteps.length - 1];
                 await DB.put('steps', { ...last, screenshot: msg.screenshot });
+                return { ok: true };
             }
-            return { ok: true };
+            const created = await DB.add('steps', {
+                sessionId: msg.sessionId,
+                type: 'screenshot',
+                action: 'manual_screenshot',
+                label: 'Manual screenshot',
+                screenshot: msg.screenshot,
+                timestamp: Date.now(),
+            });
+            if (created) await Sessions.incrementSteps(msg.sessionId, 1);
+            return { ok: true, created: true };
         }
 
         case 'TRIGGER_CAPTURE_SCREENSHOT': {
@@ -95,6 +109,16 @@ async function handleMessage(msg, sender) {
             } catch (e) {
                 return { error: e.message };
             }
+        }
+        case 'INIT_NETWORK_HOOK': {
+            const tabId = sender?.tab?.id;
+            if (!tabId) return { error: 'No tab' };
+            await chrome.scripting.executeScript({
+                target: { tabId },
+                files: ['content/network-hook.js'],
+                world: 'MAIN',
+            }).catch(() => null);
+            return { ok: true };
         }
 
         case 'GET_STATE': {
@@ -142,9 +166,22 @@ async function getActiveTab() {
 }
 
 chrome.tabs.onUpdated.addListener((tabId, info) => {
-    if (info.status === 'loading' && tabState.get(tabId)?.recording) {
-        Sessions.end(tabState.get(tabId).sessionId).catch(() => null);
-        tabState.delete(tabId);
+    const state = tabState.get(tabId);
+    if (!state?.recording) return;
+    if (info.status === 'loading') {
+        // Keep recording across navigations. We'll re-inject on complete.
+        return;
+    }
+    if (info.status === 'complete') {
+        chrome.scripting.executeScript({
+            target: { tabId },
+            files: ['content/recorder.js'],
+        }).catch(() => null);
+        chrome.scripting.executeScript({
+            target: { tabId },
+            func: (sid) => window.__nebulaTraceX?.start(sid),
+            args: [state.sessionId],
+        }).catch(() => null);
     }
 });
 

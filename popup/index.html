@@ -20,130 +20,112 @@
                 NebulaTraceX
             </div>
             <div class="row" style="gap: 6px">
-                <button class="theme-btn" id="theme-toggle" title="Toggle dark mode">
-                    Theme
-                </button>
+                <button class="theme-btn" id="theme-toggle" title="Toggle dark mode">Dark</button>
             </div>
         </header>
 
         <!-- Tabs nav -->
         <nav class="tabs-bar">
-            <button class="tab-btn active" data-tab="recorder" data-i18n="tabs.recorder">Record</button>
-            <button class="tab-btn" data-tab="logs">
-                <span data-i18n="tabs.logs">Steps</span>
+            <button class="tab-btn active" data-tab="home" data-i18n="tabs.home">HOME</button>
+            <button class="tab-btn" data-tab="sitemap">
+                <span data-i18n="tabs.sitemap">SITE-MAP</span>
                 <span class="tab-badge" id="badge-steps">0</span>
             </button>
-            <button class="tab-btn" data-tab="export" data-i18n="tabs.export">Export</button>
-            <button class="tab-btn" data-tab="stats" data-i18n="tabs.stats">Stats</button>
+            <button class="tab-btn" data-tab="stats" data-i18n="tabs.stats">STATS</button>
+            <button class="tab-btn" data-tab="settings" data-i18n="tabs.settings">SETTINGS</button>
         </nav>
 
         <div class="tab-content">
-            <div class="tab-panel active" id="tab-recorder">
-                <div class="status-bar idle" id="status-bar">
-                    <span><span class="status-dot"></span><span id="status-text" data-i18n="recorder.ready">Ready to record</span></span>
-                    <span id="elapsed-time" style="font-variant-numeric: tabular-nums">00:00</span>
-                </div>
+  
 
-                <div class="session-info" id="session-url" data-i18n="recorder.session_prompt">
-                    Choose a tab to start...
-                </div>
+            <div class="tab-panel active" id="tab-home">
+                <div class="home-shell">
+                    <div class="home-top">
+                        <div class="home-icon">🔍</div>
+                        <div class="home-icon">🔔</div>
+                    </div>
 
-                <div class="recorder-actions">
-                    <button class="btn btn-primary btn-record" id="btn-start" data-i18n="recorder.start_btn">
-                        Start Recording
-                    </button>
-                    <button class="btn btn-ghost btn-record btn-capture" id="btn-screenshot" data-i18n-attr="title" data-i18n="recorder.screenshot_btn">
-                        Capture
-                    </button>
-                </div>
+                    <div class="home-card">
+                        <div class="home-card-title">NebulaTraceX</div>
+                        <div class="home-card-sub">Quick capture</div>
+                    </div>
 
-                <div class="note-wrap">
-                    <div class="section-label" data-i18n="recorder.note_label">Notes</div>
-                    <textarea class="field" id="session-note" rows="2" data-i18n="recorder.note_placeholder" data-i18n-attr="placeholder"
-                        placeholder="Describe bug or context... (auto-saved)"></textarea>
-                </div>
+                    <div class="home-actions">
+                        <button class="btn btn-primary btn-record" id="btn-start" data-i18n="recorder.start_btn">
+                            Start Recording
+                        </button>
+                        <button class="btn btn-ghost btn-record btn-capture" id="btn-screenshot" data-i18n-attr="title"
+                            data-i18n="recorder.screenshot_btn">
+                            Capture
+                        </button>
+                    </div>
 
-                <div class="section-label" data-i18n="recorder.recent_steps">Recent Steps</div>
-                <div id="recent-steps">
-                    <div class="empty">
-                        <div class="empty-icon"></div>
-                        <div class="empty-title" data-i18n="recorder.empty_title">No steps yet</div>
-                        <div class="empty-desc" data-i18n="recorder.empty_desc">
-                            Click "Start Recording" and interact with the page
+                    <div class="home-stats">
+                        <div class="home-pill">2/4</div>
+                        <div class="home-timer" id="elapsed-time" style="font-variant-numeric: tabular-nums">00:00</div>
+                        <div class="home-pill">●</div>
+                    </div>
+
+                    <div class="status-bar idle home-status" id="status-bar">
+                        <span><span class="status-dot"></span><span id="status-text" data-i18n="recorder.ready">Ready to record</span></span>
+                    </div>
+
+                    <div class="home-site-card">
+                        <div class="home-site-title">Amazon</div>
+                        <div class="session-info" id="session-url" data-i18n="recorder.session_prompt">
+                            Choose a tab to start...
                         </div>
                     </div>
+
+                    <div class="note-wrap">
+                        <div class="section-label" data-i18n="recorder.note_label">Notes</div>
+                        <textarea class="field" id="session-note" rows="4" data-i18n="recorder.note_placeholder"
+                            data-i18n-attr="placeholder" placeholder="Describe bug or context... (auto-saved)"></textarea>
+                    </div>
+
+                    <div class="home-actions">
+                        <button class="btn btn-ghost btn-sm" id="btn-view-site" data-i18n="recorder.view_site"
+                            style="display:none">
+                            View Site Details
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            <div class="tab-panel" id="tab-logs">
+            <div class="tab-panel" id="tab-sitemap">
                 <div class="search-box">
                     <span style="color: var(--text-subtle); font-size: 13px">Search</span>
-                    <input type="text" id="log-search" data-i18n="logs.search_placeholder" data-i18n-attr="placeholder" placeholder="Search action, selector..." />
-                    <select id="log-filter" style="
-                background: none;
-                border: none;
-                outline: none;
-                font-size: 12px;
-                color: var(--text-muted);
-                font-family: var(--font);
-                cursor: pointer;
-              ">
-                        <option value="" data-i18n="logs.filter_all">All</option>
-                        <option value="click" data-i18n="logs.filter_click">Click</option>
-                        <option value="input" data-i18n="logs.filter_input">Input</option>
-                        <option value="network" data-i18n="logs.filter_network">Network</option>
-                        <option value="error" data-i18n="logs.filter_error">Error</option>
-                    </select>
+                    <input type="text" id="sitemap-search" data-i18n="sitemap.search_placeholder"
+                        data-i18n-attr="placeholder" placeholder="Search site..." />
                 </div>
-                <div id="steps-list">
-                    <div class="empty">
-                        <div class="empty-icon"></div>
-                        <div class="empty-title" data-i18n="logs.empty_no_steps">No steps yet</div>
-                        <div class="empty-desc" data-i18n="logs.empty_desc">Record a session to see the timeline here</div>
+                <div id="sitemap-list"></div>
+
+                <div class="sitemap-detail" id="sitemap-detail" style="display:none">
+                    <div class="row-between" style="margin-bottom:8px">
+                        <button class="btn btn-ghost btn-sm" id="btn-back-sitemap"
+                            data-i18n="sitemap.back">Back</button>
+                        <span class="badge badge-gray" id="sitemap-hostname"></span>
                     </div>
-                </div>
-            </div>
-
-            <div class="tab-panel" id="tab-export">
-                <div class="section-label" data-i18n="export.format">Format</div>
-                <div class="toggle-group" style="margin-bottom: 14px">
-                    <button class="toggle-btn active" data-fmt="json">JSON</button>
-                    <button class="toggle-btn" data-fmt="markdown">Markdown</button>
-                </div>
-
-                <div class="section-label" data-i18n="export.ai_prompt_label">AI Prompt</div>
-                <div class="card" style="margin-bottom: 14px">
-                    <div style="
-                font-size: 12px;
-                color: var(--text-muted);
-                margin-bottom: 8px;
-                line-height: 1.5;
-              " data-i18n="export.ai_prompt_desc">
-                        Copy this prompt to ChatGPT / Claude for bug analysis:
+                    <div class="card" style="margin-bottom:8px">
+                        <div class="detail-title" id="sitemap-site-name">—</div>
+                        <div class="detail-meta">
+                            <span id="sitemap-session-count">0</span>
+                            <span id="sitemap-step-count">0</span>
+                        </div>
+                        <select class="field" id="sitemap-session-select"></select>
                     </div>
-                    <div class="code-preview" id="ai-prompt">
-                        (AI prompt will be loaded here)
+
+                    <div class="toggle-group detail-tabs">
+                        <button class="toggle-btn active" data-site-tab="steps"
+                            data-i18n="details.tab_steps">Steps</button>
+                        <button class="toggle-btn" data-site-tab="networks"
+                            data-i18n="details.tab_networks">Networks</button>
+                        <button class="toggle-btn" data-site-tab="images" data-i18n="details.tab_images">Images</button>
                     </div>
-                    <button class="btn btn-ghost btn-sm" style="margin-top: 8px" id="btn-copy-prompt" data-i18n="export.ai_prompt_copy">
-                        Copy prompt
-                    </button>
-                </div>
 
-                <div class="section-label row-between">
-                    <span data-i18n="export.preview">Preview</span>
-                    <span class="export-size" id="export-size">~0 KB</span>
-                </div>
-                <div class="code-preview" id="export-preview" style="margin-bottom: 12px" data-i18n="export.no_session_preview">
-                    (Select a session and format to preview)
-                </div>
-
-                <div style="display: flex; gap: 8px">
-                    <button class="btn btn-primary btn-lg" style="flex: 1" id="btn-export" data-i18n="export.btn_export">
-                        Export & Download
-                    </button>
-                    <button class="btn btn-ghost" id="btn-copy-export" title="Copy to clipboard">
-                        <span class="icon-copy"></span>
-                    </button>
+                    <div class="detail-panel active" id="site-steps"></div>
+                    <div class="detail-panel" id="site-networks"></div>
+                    <div class="detail-panel" id="site-images"></div>
                 </div>
             </div>
 
@@ -157,36 +139,29 @@
                 </div>
 
                 <div id="stats-content" style="display: none">
-                    <div class="chart-wrap">
-                        <div class="chart-title" data-i18n="stats.chart_title">Steps by Project</div>
-                        <canvas id="chart-bar" height="100"></canvas>
-                    </div>
                     <div class="chart-wrap" style="display: flex; gap: 12px; align-items: center">
                         <canvas id="chart-pie" width="100" height="100" style="flex-shrink: 0"></canvas>
                         <div id="chart-legend" style="font-size: 11px; line-height: 1.8"></div>
                     </div>
 
-                    <div class="section-label row-between" style="margin-bottom: 8px">
-                        <span data-i18n="stats.projects_label">Projects</span>
-                        <button class="btn btn-ghost btn-sm" id="btn-export-csv" data-i18n="stats.btn_csv">
-                            CSV
-                        </button>
-                    </div>
                     <div style="overflow-x: auto">
                         <table class="stats-table" id="stats-table">
                             <thead>
                                 <tr>
                                     <th data-col="displayName">
-                                        <span data-i18n="stats.col_project">Project</span> <span class="sort-arrow"></span>
+                                        <span data-i18n="stats.col_project">Project</span> <span
+                                            class="sort-arrow"></span>
                                     </th>
                                     <th data-col="sessionCount">
-                                        <span data-i18n="stats.col_sessions">Sessions</span> <span class="sort-arrow"></span>
+                                        <span data-i18n="stats.col_sessions">Sessions</span> <span
+                                            class="sort-arrow"></span>
                                     </th>
                                     <th data-col="stepCount">
                                         <span data-i18n="stats.col_steps">Steps</span> <span class="sort-arrow"></span>
                                     </th>
                                     <th data-col="errorCount">
-                                        <span data-i18n="stats.col_errors">Errors</span> <span class="sort-arrow"></span>
+                                        <span data-i18n="stats.col_errors">Errors</span> <span
+                                            class="sort-arrow"></span>
                                     </th>
                                 </tr>
                             </thead>
@@ -195,9 +170,45 @@
                     </div>
 
                     <div class="divider"></div>
-                    <button class="btn btn-ghost btn-sm btn-full" id="btn-clear" style="color: var(--danger)" data-i18n="stats.btn_clear">
+                    <button class="btn btn-ghost btn-sm btn-full" id="btn-clear" style="color: var(--danger)"
+                        data-i18n="stats.btn_clear">
                         Clear all data
                     </button>
+                </div>
+            </div>
+            <div class="tab-panel" id="tab-settings">
+                <div class="card">
+                    <div class="section-label" data-i18n="settings.title">Settings</div>
+                    <div style="font-size:12px;color:var(--text-muted);line-height:1.5">
+                        <div data-i18n="settings.desc">This section will contain preferences and advanced options.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="image-modal" id="image-modal" style="display:none">
+            <div class="image-modal-backdrop" id="image-modal-backdrop"></div>
+            <div class="image-modal-card">
+                <div class="image-modal-toolbar">
+                    <button class="btn btn-ghost btn-sm" id="image-modal-open" data-i18n="sitemap.open_window">Open
+                        Window</button>
+                    <div class="row" style="gap:6px">
+                        <button class="btn btn-ghost btn-sm" id="image-modal-pen" data-i18n="sitemap.pen">Pen</button>
+                        <button class="btn btn-ghost btn-sm" id="image-modal-clear"
+                            data-i18n="sitemap.clear">Clear</button>
+                        <button class="btn btn-primary btn-sm" id="image-modal-save"
+                            data-i18n="sitemap.save">Save</button>
+                    </div>
+                </div>
+                <div class="image-modal-stage">
+                    <img id="image-modal-img" alt="screenshot" />
+                    <canvas id="image-modal-canvas"></canvas>
+                </div>
+                <textarea class="field" id="image-modal-note" rows="2" data-i18n="sitemap.image_note"
+                    data-i18n-attr="placeholder" placeholder="Add a note for this image..."></textarea>
+                <div class="row-between" style="margin-top:6px">
+                    <span id="image-modal-time" style="font-size:11px;color:var(--text-subtle)"></span>
+                    <button class="btn btn-ghost btn-sm" id="image-modal-close" data-i18n="sitemap.close">Close</button>
                 </div>
             </div>
         </div>

@@ -4,9 +4,10 @@ import { t } from '../i18n.js';
 let _state = { recording: false, sessionId: null, startTime: null };
 let _timer = null;
 
-export function initRecorderTab(onStepsUpdate) {
+export function initRecorderTab(onStepsUpdate, onViewSite) {
     const btnStart = document.getElementById('btn-start');
     const btnShot = document.getElementById('btn-screenshot');
+    const btnView = document.getElementById('btn-view-site');
     const statusBar = document.getElementById('status-bar');
     const statusText = document.getElementById('status-text');
     const elapsedEl = document.getElementById('elapsed-time');
@@ -48,6 +49,10 @@ export function initRecorderTab(onStepsUpdate) {
             if (res?.ok) {
                 exitRecording();
                 onStepsUpdate && onStepsUpdate(res.sessionId);
+                if (btnView) {
+                    btnView.style.display = 'inline-flex';
+                    btnView.dataset.sessionId = res.sessionId;
+                }
             }
         } else {
             // Start
@@ -56,6 +61,7 @@ export function initRecorderTab(onStepsUpdate) {
             btnStart.disabled = false;
             if (res?.ok) {
                 enterRecording(res.sessionId);
+                if (btnView) btnView.style.display = 'none';
             } else {
                 showError(res?.error);
             }
@@ -63,6 +69,7 @@ export function initRecorderTab(onStepsUpdate) {
     });
 
     btnShot.addEventListener('click', async () => {
+        if (!_state.recording) return;
         btnShot.disabled = true;
         await sendMsg({ type: 'TRIGGER_CAPTURE_SCREENSHOT' });
         setTimeout(() => { btnShot.disabled = false; }, 1000);
@@ -84,6 +91,7 @@ export function initRecorderTab(onStepsUpdate) {
         btnStart.textContent = t('recorder.stop_btn');
         btnStart.title = `${t('recorder.stop_btn')} (${START_STOP_SHORTCUT})`;
         btnStart.className = 'btn btn-danger btn-record';
+        btnShot.disabled = false;
         setStatus('active', t('recorder.recording'));
         logoDot.classList.add('recording');
         startTimer();
@@ -94,6 +102,7 @@ export function initRecorderTab(onStepsUpdate) {
         btnStart.textContent = t('recorder.start_btn');
         btnStart.title = `${t('recorder.start_btn')} (${START_STOP_SHORTCUT})`;
         btnStart.className = 'btn btn-primary btn-record';
+        btnShot.disabled = true;
         setStatus('idle', t('recorder.ready'));
         logoDot.classList.remove('recording');
         stopTimer();
@@ -116,6 +125,13 @@ export function initRecorderTab(onStepsUpdate) {
     function stopTimer() {
         clearInterval(_timer);
         elapsedEl.textContent = '00:00';
+    }
+
+    if (btnView) {
+        btnView.addEventListener('click', () => {
+            const sid = Number(btnView.dataset.sessionId);
+            if (sid && onViewSite) onViewSite(sid);
+        });
     }
 
     return { getState: () => _state };

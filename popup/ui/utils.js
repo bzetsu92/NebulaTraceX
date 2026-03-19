@@ -28,6 +28,7 @@ export function stepIcon(type) {
         input: { icon: '', cls: 'icon-input' },
         submit: { icon: '', cls: 'icon-submit' },
         network: { icon: '', cls: 'icon-network' },
+        screenshot: { icon: '', cls: 'icon-image' },
         navigate: { icon: '', cls: 'icon-navigate' },
         navigation: { icon: '', cls: 'icon-navigate' },
         error: { icon: '', cls: 'icon-error' },

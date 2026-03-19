@@ -1,0 +1,31 @@
+.viewer {
+  padding: 14px;
+}
+.viewer-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.viewer-title {
+  font-size: 14px;
+  font-weight: 700;
+}
+.viewer-stage {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-subtle);
+  padding: 8px;
+  display: flex;
+  justify-content: center;
+}
+.viewer-stage img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius-sm);
+}
+.viewer-note {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--text-muted);
+}

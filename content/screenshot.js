@@ -20,6 +20,25 @@ export async function captureScreenshot() {
     });
 }
 
+function createCanvas(w, h) {
+    if (typeof OffscreenCanvas !== 'undefined') return new OffscreenCanvas(w, h);
+    const c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    return c;
+}
+
+function canvasToBlob(canvas, quality) {
+    if (canvas.convertToBlob) {
+        return canvas.convertToBlob({ type: 'image/jpeg', quality });
+    }
+    return new Promise((resolve, reject) => {
+        canvas.toBlob((blob) => {
+            if (blob) resolve(blob);
+            else reject(new Error('toBlob failed'));
+        }, 'image/jpeg', quality);
+    });
+}
+
 /**
  * Compress a base64 PNG/JPEG to a smaller JPEG using an off-screen canvas.
  * @param {string} dataUrl
@@ -32,13 +51,14 @@ export function compressImage(dataUrl, quality = 0.6, maxW = 1280) {
         const img = new Image();
         img.onload = () => {
             const scale = Math.min(1, maxW / img.width);
-            const canvas = new OffscreenCanvas(
+            const canvas = createCanvas(
                 Math.round(img.width * scale),
                 Math.round(img.height * scale)
             );
             const ctx = canvas.getContext('2d');
+            if (!ctx) return reject(new Error('Canvas unavailable'));
             ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            canvas.convertToBlob({ type: 'image/jpeg', quality })
+            canvasToBlob(canvas, quality)
                 .then(blob => {
                     const reader = new FileReader();
                     reader.onload = () => resolve(reader.result);
@@ -69,10 +89,11 @@ async function samplePixels(dataUrl, grid = 4) {
     return new Promise((resolve) => {
         const img = new Image();
         img.onload = () => {
-            const c = new OffscreenCanvas(grid, grid);
-            c.getContext('2d').drawImage(img, 0, 0, grid, grid);
-            c.getContext('2d').getImageData(0, 0, grid, grid).data;
-            resolve(Array.from(c.getContext('2d').getImageData(0, 0, grid, grid).data));
+            const c = createCanvas(grid, grid);
+            const ctx = c.getContext('2d');
+            if (!ctx) return resolve(null);
+            ctx.drawImage(img, 0, 0, grid, grid);
+            resolve(Array.from(ctx.getImageData(0, 0, grid, grid).data));
         };
         img.onerror = () => resolve(null);
         img.src = dataUrl;

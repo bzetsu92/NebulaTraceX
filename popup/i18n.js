@@ -5,10 +5,10 @@
 const TRANSLATIONS = {
 	en: {
 		tabs: {
-			recorder: 'Record',
-			logs: 'Steps',
-			export: 'Export',
-			stats: 'Stats'
+			home: 'HOME',
+			sitemap: 'SITE-MAP',
+			stats: 'STATS',
+			settings: 'SETTINGS'
 		},
 		recorder: {
 			ready: 'Ready to record',
@@ -16,12 +16,26 @@ const TRANSLATIONS = {
 			start_btn: 'Start Recording',
 			stop_btn: 'Stop Recording',
 			screenshot_btn: 'Capture Screenshot',
+			view_site: 'View Site Details',
 			session_prompt: 'Choose a tab to start...',
 			note_label: 'Notes',
 			note_placeholder: 'Describe bug or context... (auto-saved)',
-			recent_steps: 'Recent Steps',
 			empty_title: 'No steps yet',
 			empty_desc: 'Click "Start Recording" and interact with the page'
+		},
+		sitemap: {
+			search_placeholder: 'Search site...',
+			empty: 'No sites yet',
+			view: 'View',
+			back: 'Back',
+			sessions: 'Sessions',
+			steps: 'Steps',
+			close: 'Close',
+			image_note: 'Add a note for this image...',
+			open_window: 'Open Window',
+			pen: 'Pen',
+			clear: 'Clear',
+			save: 'Save'
 		},
 		logs: {
 			search_placeholder: 'Search action, selector...',
@@ -35,24 +49,22 @@ const TRANSLATIONS = {
 			empty_no_steps: 'No steps recorded yet',
 			empty_desc: 'Record a session to see the timeline here'
 		},
-		export: {
-			format: 'Format',
-			ai_prompt_label: 'AI Prompt',
-			ai_prompt_desc: 'Copy this prompt to ChatGPT / Claude for bug analysis:',
-			ai_prompt_copy: 'Copy prompt',
-			ai_prompt_copied: 'Copied!',
-			preview: 'Preview',
-			btn_export: 'Export & Download',
-			btn_exporting: 'Exporting...',
-			btn_exported: 'Exported!',
+		details: {
 			no_session: '(No session selected)',
-			no_session_preview: '(Select a session and format to preview)'
+			in_progress: 'In progress',
+			tab_steps: 'Steps',
+			tab_networks: 'Networks',
+			tab_images: 'Images',
+			count_steps: 'Steps',
+			count_networks: 'Networks',
+			count_images: 'Images',
+			empty_steps: 'No steps recorded yet',
+			empty_networks: 'No network calls recorded yet',
+			empty_images: 'No screenshots yet'
 		},
 		stats: {
 			skeleton_project: 'Allocated by Project',
-			chart_title: 'Steps by Project',
 			projects_label: 'Projects',
-			btn_csv: 'CSV',
 			col_project: 'Project',
 			col_sessions: 'Sessions',
 			col_steps: 'Steps',
@@ -65,14 +77,18 @@ const TRANSLATIONS = {
 			copy: 'Copy',
 			copied: 'Copied!',
 			unknown_url: 'Unknown URL'
+		},
+		settings: {
+			title: 'Settings',
+			desc: 'This section will contain preferences and advanced options.'
 		}
 	},
 	vi: {
 		tabs: {
-			recorder: 'Ghi lại',
-			logs: 'Các bước',
-			export: 'Xuất dữ liệu',
-			stats: 'Thống kê'
+			home: 'HOME',
+			sitemap: 'SITE-MAP',
+			stats: 'THỐNG KÊ',
+			settings: 'CÀI ĐẶT'
 		},
 		recorder: {
 			ready: 'Sẵn sàng ghi',
@@ -80,12 +96,26 @@ const TRANSLATIONS = {
 			start_btn: 'Bắt đầu ghi',
 			stop_btn: 'Dừng ghi',
 			screenshot_btn: 'Chụp ảnh màn hình',
+			view_site: 'Xem chi tiết site',
 			session_prompt: 'Chọn tab để bắt đầu...',
 			note_label: 'Ghi chú',
 			note_placeholder: 'Mô tả bug hoặc context... (lưu tự động)',
-			recent_steps: 'Bước gần nhất',
 			empty_title: 'Chưa có bước nào',
 			empty_desc: 'Nhấn "Bắt đầu ghi" rồi thao tác trên trang web'
+		},
+		sitemap: {
+			search_placeholder: 'Tìm site...',
+			empty: 'Chưa có site nào',
+			view: 'Xem',
+			back: 'Quay lại',
+			sessions: 'Phiên',
+			steps: 'Bước',
+			close: 'Đóng',
+			image_note: 'Ghi chú cho ảnh này...',
+			open_window: 'Mở cửa sổ',
+			pen: 'Bút',
+			clear: 'Xoá',
+			save: 'Lưu'
 		},
 		logs: {
 			search_placeholder: 'Tìm action, selector...',
@@ -99,24 +129,22 @@ const TRANSLATIONS = {
 			empty_no_steps: 'Chưa có bước nào được ghi',
 			empty_desc: 'Ghi lại để thấy timeline ở đây'
 		},
-		export: {
-			format: 'Định dạng',
-			ai_prompt_label: 'AI Prompt',
-			ai_prompt_desc: 'Copy prompt này vào ChatGPT / Claude để phân tích bug:',
-			ai_prompt_copy: 'Copy prompt',
-			ai_prompt_copied: 'Đã copy!',
-			preview: 'Xem trước',
-			btn_export: 'Xuất & Tải về',
-			btn_exporting: 'Đang xuất...',
-			btn_exported: 'Đã xuất!',
+		details: {
 			no_session: '(Chưa có session nào)',
-			no_session_preview: '(Chọn session và format để xem preview)'
+			in_progress: 'Đang ghi',
+			tab_steps: 'Steps',
+			tab_networks: 'Networks',
+			tab_images: 'Images',
+			count_steps: 'Steps',
+			count_networks: 'Networks',
+			count_images: 'Images',
+			empty_steps: 'Chưa có bước nào',
+			empty_networks: 'Chưa có network call',
+			empty_images: 'Chưa có ảnh chụp'
 		},
 		stats: {
 			skeleton_project: 'Phân bổ theo Project',
-			chart_title: 'Bước theo Project',
 			projects_label: 'Dự án',
-			btn_csv: 'CSV',
 			col_project: 'Dự án',
 			col_sessions: 'Phiên',
 			col_steps: 'Bước',
@@ -129,6 +157,10 @@ const TRANSLATIONS = {
 			copy: 'Copy',
 			copied: 'Đã copy!',
 			unknown_url: 'Không rõ URL'
+		},
+		settings: {
+			title: 'Cài đặt',
+			desc: 'Khu vực này sẽ chứa tuỳ chọn và thiết lập nâng cao.'
 		}
 	}
 };

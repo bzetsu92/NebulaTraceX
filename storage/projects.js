@@ -14,6 +14,7 @@ export const Projects = {
             hostname,
             displayName: hostname,
             color: PALETTE[Math.abs(hashCode(hostname)) % PALETTE.length],
+            faviconUrl: `https://www.google.com/s2/favicons?domain=${hostname}&sz=64`,
             createdAt: Date.now(),
         };
         await DB.put('projects', project);

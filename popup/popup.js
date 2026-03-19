@@ -1,10 +1,10 @@
 import { initRecorderTab, renderRecentSteps } from './tabs/recorder-tab.js';
-import { initLogsTab, setSteps } from './tabs/logs-tab.js';
-import { initExportTab } from './tabs/export-tab.js';
+import { initSitemapTab, openSiteBySessionId } from './tabs/sitemap-tab.js';
 import { initStatsTab } from './tabs/stats-tab.js';
 import { Sessions, Steps } from '../storage/sessions.js';
-import { sendMsg } from './ui/utils.js';
-import { translateDOM, t } from './i18n.js';
+import { translateDOM } from './i18n.js';
+
+let sitemap = null;
 
 function initTheme() {
   const saved = localStorage.getItem('br-theme') || 'light';
@@ -33,27 +33,44 @@ function initTabs(onTabChange) {
   });
 }
 
+function initSideCarousel() {
+  const root = document.getElementById('side-carousel');
+  const dotsWrap = document.getElementById('side-dots');
+  if (!root || !dotsWrap) return;
+  const slides = Array.from(root.querySelectorAll('.side-slide'));
+  const dots = Array.from(dotsWrap.querySelectorAll('.side-dot'));
+  if (!slides.length) return;
+  let idx = 0;
+  const show = (i) => {
+    slides.forEach((s, k) => s.classList.toggle('active', k === i));
+    dots.forEach((d, k) => d.classList.toggle('active', k === i));
+  };
+  show(idx);
+  setInterval(() => {
+    idx = (idx + 1) % slides.length;
+    show(idx);
+  }, 2600);
+}
+
 async function main() {
   translateDOM();
   initTheme();
+  initSideCarousel();
 
-  const recorder = initRecorderTab(onStepsUpdate);
-  const logs = initLogsTab();
-  const exporter = initExportTab();
+  const recorder = initRecorderTab(onStepsUpdate, (sessionId) => {
+    const btn = document.querySelector('.tab-btn[data-tab="sitemap"]');
+    btn?.click();
+    openSiteBySessionId(sessionId);
+  });
+  sitemap = initSitemapTab();
   const stats = initStatsTab();
 
   initTabs(async (tabId) => {
-    if (tabId === 'logs' || tabId === 'export') {
-      await onStepsUpdate();
+    if (tabId === 'sitemap') {
+      await sitemap.refreshSites();
     }
     if (tabId === 'stats') {
       await stats.loadStats();
-    }
-    if (tabId === 'export') {
-      const state = await sendMsg({ type: 'GET_STATE' });
-      const allSessions = await Sessions.getAll();
-      const latest = allSessions.sort((a, b) => b.startedAt - a.startedAt)[0];
-      if (latest) await exporter.loadSession(latest.id);
     }
   });
 
@@ -63,7 +80,7 @@ async function main() {
       tag === 'input' || tag === 'textarea' || tag === 'select' || e.target?.isContentEditable;
     if (isTypingContext) return;
     if (!e.altKey) return;
-    const map = { '1': 'recorder', '2': 'logs', '3': 'export', '4': 'stats' };
+    const map = { '1': 'home', '2': 'sitemap', '3': 'stats', '4': 'settings' };
     const tabId = map[e.key];
     if (!tabId) return;
     e.preventDefault();
@@ -72,6 +89,7 @@ async function main() {
   });
 
   await onStepsUpdate();
+  if (sitemap) await sitemap.refreshSites();
 }
 
 async function onStepsUpdate(sessionId) {
@@ -84,10 +102,9 @@ async function onStepsUpdate(sessionId) {
     if (!sessionId) return;
 
     const steps = await Steps.getBySession(sessionId);
-    setSteps(steps);
     renderRecentSteps(steps);
+    if (sitemap) await sitemap.refreshSites();
 
-    document.getElementById('badge-steps').textContent = steps.length;
   } catch (e) {
     console.warn('[NebulaTraceX popup]', e);
   }

@@ -47,6 +47,9 @@ function render() {
   list.innerHTML = filtered.slice().reverse().map(step => {
     const { icon, cls } = stepIcon(step.type);
     const sel = step.selector ? `<div class="step-selector">${esc(step.selector)}</div>` : '';
+    const url = step.type === 'network' && step.url
+      ? `<div class="step-selector">${esc(step.url)}</div>`
+      : '';
     const badge = typeBadge(step.type);
     const net = step.type === 'network'
       ? `<span style="font-size:10px;color:var(--text-subtle);margin-left:4px">${step.method || ''} ${step.status || ''}</span>`
@@ -60,11 +63,14 @@ function render() {
             <span class="step-action">${esc(step.label || step.action || step.type)}</span>
             ${net}
           </div>
+          ${url}
           ${sel}
           ${step.value && !step.isMasked
         ? `<div class="step-selector" style="color:var(--text-subtle)">val: ${esc(String(step.value).slice(0, 60))}</div>` : ''}
           ${step.status >= 400
         ? `<div class="step-selector" style="color:var(--danger)">HTTP ${step.status}</div>` : ''}
+          ${step.error
+        ? `<div class="step-selector" style="color:var(--danger)">Error: ${esc(step.error)}</div>` : ''}
         </div>
         <div class="step-time">${timeAgo(step.timestamp)}</div>
       </div>`;

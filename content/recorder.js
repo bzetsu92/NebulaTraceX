@@ -124,11 +124,6 @@ function safeValue(el) {
     return maskValue(String(raw).slice(0, 200));
 }
 
-function sanitizeBody(body) {
-    const str = typeof body === 'string' ? body : JSON.stringify(body);
-    return maskValue(str.slice(0, 1000));
-}
-
 function captureScreenshot() {
     return new Promise((resolve, reject) => {
         const timeout = setTimeout(() => reject(new Error('Screenshot timeout')), 3000);
@@ -141,18 +136,38 @@ function captureScreenshot() {
     });
 }
 
+function createCanvas(w, h) {
+    if (typeof OffscreenCanvas !== 'undefined') return new OffscreenCanvas(w, h);
+    const c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    return c;
+}
+
+function canvasToBlob(canvas, quality) {
+    if (canvas.convertToBlob) {
+        return canvas.convertToBlob({ type: 'image/jpeg', quality });
+    }
+    return new Promise((resolve, reject) => {
+        canvas.toBlob((blob) => {
+            if (blob) resolve(blob);
+            else reject(new Error('toBlob failed'));
+        }, 'image/jpeg', quality);
+    });
+}
+
 function compressImage(dataUrl, quality = 0.6, maxW = 1280) {
     return new Promise((resolve, reject) => {
         const img = new Image();
         img.onload = () => {
             const scale = Math.min(1, maxW / img.width);
-            const canvas = new OffscreenCanvas(
+            const canvas = createCanvas(
                 Math.round(img.width * scale),
                 Math.round(img.height * scale)
             );
             const ctx = canvas.getContext('2d');
+            if (!ctx) return reject(new Error('Canvas unavailable'));
             ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            canvas.convertToBlob({ type: 'image/jpeg', quality })
+            canvasToBlob(canvas, quality)
                 .then((blob) => {
                     const reader = new FileReader();
                     reader.onload = () => resolve(reader.result);
@@ -178,10 +193,11 @@ function samplePixels(dataUrl, grid = 4) {
     return new Promise((resolve) => {
         const img = new Image();
         img.onload = () => {
-            const c = new OffscreenCanvas(grid, grid);
-            c.getContext('2d').drawImage(img, 0, 0, grid, grid);
-            c.getContext('2d').getImageData(0, 0, grid, grid).data;
-            resolve(Array.from(c.getContext('2d').getImageData(0, 0, grid, grid).data));
+            const c = createCanvas(grid, grid);
+            const ctx = c.getContext('2d');
+            if (!ctx) return resolve(null);
+            ctx.drawImage(img, 0, 0, grid, grid);
+            resolve(Array.from(ctx.getImageData(0, 0, grid, grid).data));
         };
         img.onerror = () => resolve(null);
         img.src = dataUrl;
@@ -194,10 +210,10 @@ let _lastScreenshot = null;
 let _stepBuffer = [];
 let _flushTimer = null;
 
-const IGNORE_EXT = /\.(png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|css|map)(\?.*)?$/i;
-const _origFetch = window.fetch.bind(window);
-const _origXHROpen = XMLHttpRequest.prototype.open;
-const _origXHRSend = XMLHttpRequest.prototype.send;
+const NET_CHANNEL = 'nebula-trace-x';
+let _netListener = null;
+let _netReady = false;
+let _netRetry = 0;
 
 
 window.__nebulaTraceX = {
@@ -264,7 +280,6 @@ async function onClickGlobal(e) {
     };
 
     postStep(step);
-    maybeScreenshot();
 }
 
 function onInputGlobal(e) {
@@ -328,56 +343,54 @@ function onUnhandledRejection(e) {
 
 
 function patchNetwork() {
-    window.fetch = async function (...args) {
-        const [input, init] = args;
-        const url = typeof input === 'string' ? input : input?.url || '';
-        const res = await _origFetch(...args);
-        if (_recording && shouldCapture(url)) {
-            captureRequest({
-                method: (init?.method || 'GET').toUpperCase(),
-                url: url.slice(0, 300),
-                status: res.status,
-                type: 'fetch',
-            });
+    if (_netListener) return;
+    _netReady = false;
+    _netRetry = 0;
+    _netListener = (e) => {
+        if (e.source !== window) return;
+        const data = e.data || {};
+        if (data.source !== NET_CHANNEL) return;
+        if (data.type === 'net-ready') {
+            _netReady = true;
+            return;
         }
-        return res;
+        if (data.type !== 'network') return;
+        if (!_recording) return;
+        const req = data.payload || {};
+        captureRequest({
+            method: req.method,
+            url: req.url,
+            status: req.status,
+            type: req.type,
+            body: req.body || null,
+            error: req.error || null,
+        });
     };
-
-    XMLHttpRequest.prototype.open = function (method, url, ...rest) {
-        this.__method = method;
-        this.__url = url;
-        return _origXHROpen.call(this, method, url, ...rest);
-    };
-    XMLHttpRequest.prototype.send = function (body) {
-        if (_recording && shouldCapture(this.__url)) {
-            this.addEventListener('loadend', () => {
-                captureRequest({
-                    method: (this.__method || 'GET').toUpperCase(),
-                    url: String(this.__url || '').slice(0, 300),
-                    status: this.status,
-                    type: 'xhr',
-                    body: body ? sanitizeBody(body) : null,
-                });
-            }, { once: true });
-        }
-        return _origXHRSend.call(this, body);
-    };
+    window.addEventListener('message', _netListener);
+    sendToBackground({ type: 'INIT_NETWORK_HOOK' });
+    window.postMessage({ source: NET_CHANNEL, type: 'net-start' }, '*');
+    retryNetHook();
 }
 
 function unpatchNetwork() {
-    window.fetch = _origFetch;
-    XMLHttpRequest.prototype.open = _origXHROpen;
-    XMLHttpRequest.prototype.send = _origXHRSend;
+    window.postMessage({ source: NET_CHANNEL, type: 'net-stop' }, '*');
+    if (_netListener) {
+        window.removeEventListener('message', _netListener);
+        _netListener = null;
+    }
+    _netReady = false;
+    _netRetry = 0;
 }
 
-function shouldCapture(url) {
-    if (!url) return false;
-    if (IGNORE_EXT.test(url)) return false;
-    try {
-        const u = new URL(url, location.origin);
-        if (/google-analytics|doubleclick|facebook\.net|hotjar/.test(u.hostname)) return false;
-    } catch { return false; }
-    return true;
+function retryNetHook() {
+    setTimeout(() => {
+        if (_netReady || !_recording) return;
+        if (_netRetry >= 2) return;
+        _netRetry++;
+        sendToBackground({ type: 'INIT_NETWORK_HOOK' });
+        window.postMessage({ source: NET_CHANNEL, type: 'net-start' }, '*');
+        retryNetHook();
+    }, 700);
 }
 
 function captureRequest(req) {

@@ -1,185 +1,215 @@
 import { Sessions, Steps } from '../../storage/sessions.js';
 import { t } from '../i18n.js';
+import { esc, formatTime, timeAgo, stepIcon } from '../ui/utils.js';
 
-let _fmt = 'json';
 let _currentSession = null;
+let _session = null;
+let _steps = [];
+let _activeTab = 'steps';
 
 export function initExportTab() {
-    document.querySelectorAll('[data-fmt]').forEach(btn => {
+    document.querySelectorAll('[data-detail-tab]').forEach(btn => {
         btn.addEventListener('click', () => {
-            document.querySelectorAll('[data-fmt]').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            _fmt = btn.dataset.fmt;
-            refreshPreview();
+            const tab = btn.dataset.detailTab;
+            setActiveTab(tab);
         });
     });
 
-    document.getElementById('btn-export').addEventListener('click', doExport);
-    document.getElementById('btn-copy-export').addEventListener('click', doCopy);
-    document.getElementById('btn-copy-prompt').addEventListener('click', copyAIPrompt);
-
-    return { loadSession };
+    return { loadSession, refreshIfActive };
 }
 
 async function loadSession(sessionId) {
     if (!sessionId) return;
     _currentSession = sessionId;
-    await refreshPreview();
+    await refresh();
 }
 
-async function refreshPreview() {
-    const previewEl = document.getElementById('export-preview');
-    const sizeEl = document.getElementById('export-size');
+async function refreshIfActive(sessionId) {
+    const panel = document.getElementById('tab-export');
+    if (!panel?.classList.contains('active')) return;
+    if (sessionId) _currentSession = sessionId;
+    await refresh();
+}
+
+async function refresh() {
     if (!_currentSession) {
-        previewEl.textContent = t('export.no_session');
+        renderEmpty();
+        return;
+    }
+    const [session, steps] = await Promise.all([
+        Sessions.get(_currentSession),
+        Steps.getBySession(_currentSession),
+    ]);
+    _session = session || null;
+    _steps = (steps || []).slice().sort((a, b) => a.timestamp - b.timestamp);
+
+    renderHeader();
+    renderActiveTab();
+}
+
+function setActiveTab(tab) {
+    _activeTab = tab;
+    document.querySelectorAll('[data-detail-tab]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.detailTab === tab);
+    });
+    document.querySelectorAll('.detail-panel').forEach(p => {
+        p.classList.toggle('active', p.id === `detail-${tab}`);
+    });
+    renderActiveTab();
+}
+
+function renderHeader() {
+    const urlEl = document.getElementById('detail-session-url');
+    const timeEl = document.getElementById('detail-session-time');
+    const durEl = document.getElementById('detail-session-duration');
+    const noteEl = document.getElementById('detail-session-note');
+    const countSteps = document.getElementById('detail-count-steps');
+    const countNet = document.getElementById('detail-count-networks');
+    const countImg = document.getElementById('detail-count-images');
+
+    if (!_session) {
+        urlEl.textContent = t('details.no_session');
+        timeEl.textContent = '--:--';
+        durEl.textContent = '--';
+        noteEl.textContent = '';
+        countSteps.textContent = `${t('details.count_steps')}: 0`;
+        countNet.textContent = `${t('details.count_networks')}: 0`;
+        countImg.textContent = `${t('details.count_images')}: 0`;
         return;
     }
 
-    const { content } = await buildExport(_currentSession, _fmt);
-    const kb = (new TextEncoder().encode(content).length / 1024).toFixed(1);
+    urlEl.textContent = _session.url || t('common.unknown_url');
+    timeEl.textContent = formatTime(_session.startedAt);
+    if (_session.endedAt) {
+        const secs = Math.round((_session.endedAt - _session.startedAt) / 1000);
+        durEl.textContent = `${secs}s`;
+    } else {
+        durEl.textContent = t('details.in_progress');
+    }
+    noteEl.textContent = _session.note || '';
 
-    previewEl.textContent = content.slice(0, 1200) + (content.length > 1200 ? '\n...(truncated)' : '');
-    sizeEl.textContent = `~${kb} KB`;
+    const nonNetwork = _steps.filter(s => s.type !== 'network');
+    const nets = _steps.filter(s => s.type === 'network');
+    const imgs = _steps.filter(s => s.screenshot);
+    countSteps.textContent = `${t('details.count_steps')}: ${nonNetwork.length}`;
+    countNet.textContent = `${t('details.count_networks')}: ${nets.length}`;
+    countImg.textContent = `${t('details.count_images')}: ${imgs.length}`;
 }
 
-async function buildExport(sessionId, fmt) {
-    const [session, steps] = await Promise.all([
-        Sessions.get(sessionId),
-        Steps.getBySession(sessionId),
-    ]);
+function renderActiveTab() {
+    if (_activeTab === 'steps') return renderSteps();
+    if (_activeTab === 'networks') return renderNetworks();
+    return renderImages();
+}
 
-    if (!session) return { content: '(session not found)', ext: fmt };
-
-    if (fmt === 'json') {
-        const payload = {
-            session: {
-                id: session.id,
-                url: session.url,
-                hostname: session.hostname,
-                startedAt: new Date(session.startedAt).toISOString(),
-                endedAt: session.endedAt ? new Date(session.endedAt).toISOString() : null,
-                note: session.note || '',
-            },
-            steps: steps.map(s => ({
-                ...s,
-                screenshot: s.screenshot ? '[base64]' : undefined,
-                timestamp: new Date(s.timestamp).toISOString(),
-            })),
-            summary: {
-                totalSteps: steps.length,
-                clicks: steps.filter(s => s.type === 'click').length || undefined,
-                inputs: steps.filter(s => s.type === 'input').length || undefined,
-                errors: steps.filter(s => s.type === 'error').length || undefined,
-            },
-        };
-        return { content: JSON.stringify(payload, null, 2), ext: 'json' };
+function renderSteps() {
+    const target = document.getElementById('detail-steps');
+    const steps = _steps.filter(s => s.type !== 'network');
+    if (!steps.length) {
+        target.innerHTML = emptyBlock(t('details.empty_steps'));
+        return;
     }
 
-    // Markdown
-    const dur = session.endedAt
-        ? Math.round((session.endedAt - session.startedAt) / 1000) + 's'
-        : 'In progress';
-
-    let md = `# Bug Report: ${session.hostname}\n\n`;
-    md += `- **URL:** ${session.url}\n`;
-    md += `- **Time:** ${new Date(session.startedAt).toLocaleString()}\n`;
-    if (session.note) md += `- **Note:** ${session.note}\n`;
-    md += `\n## Steps\n\n`;
-
-    steps.forEach((step, i) => {
-        const t_str = new Date(step.timestamp).toLocaleTimeString();
-        md += `### ${i + 1}. ${capitalize(step.action || step.type)}\n`;
-        md += `- **At:** ${t_str}\n`;
-        if (step.selector) md += `- **Selector:** \`${step.selector}\`\n`;
-        if (step.label) md += `- **Element:** ${step.label}\n`;
-        if (step.value && !step.isMasked) md += `- **Value:** \`${String(step.value).slice(0, 100)}\`\n`;
-        if (step.url && step.type === 'navigate') md += `- **To:** \`${step.url}\`\n`;
-        if (step.screenshot) md += `- **Screenshot:** Attached\n`;
-        md += `\n`;
-    });
-
-    md += `---\n\n## 📊 Summary\n\n`;
-    md += `| Metric | Count |\n|---|---|\n`;
-    md += `| Total steps | ${steps.length} |\n`;
-    md += `| Clicks | ${steps.filter(s => s.type === 'click').length} |\n`;
-    md += `| Inputs | ${steps.filter(s => s.type === 'input').length} |\n`;
-    md += `| Network calls | ${steps.filter(s => s.type === 'network').length} |\n`;
-    md += `| Errors | ${steps.filter(s => s.type === 'error').length} |\n`;
-    md += `\n---\n*Exported by NebulaTraceX v1.0 – bzetsu92*\n`;
-
-    return { content: md, ext: 'md' };
+    target.innerHTML = steps.map(step => {
+        const { cls, icon } = stepIcon(step.type);
+        const sel = step.selector ? `<div class="step-selector">${esc(step.selector)}</div>` : '';
+        const val = step.value && !step.isMasked
+            ? `<div class="step-selector" style="color:var(--text-subtle)">val: ${esc(String(step.value).slice(0, 80))}</div>`
+            : '';
+        const label = step.label || step.action || step.type;
+        const err = step.type === 'error' && step.message
+            ? `<div class="step-selector" style="color:var(--danger)">${esc(step.message)}</div>`
+            : '';
+        return `
+          <div class="card-mini">
+            <div class="step-icon ${cls}">${icon}</div>
+            <div class="step-body">
+              <div class="row" style="gap:6px;margin-bottom:2px">
+                <span class="badge badge-gray">${esc(step.type)}</span>
+                <span class="step-action">${esc(label)}</span>
+              </div>
+              ${sel}
+              ${val}
+              ${err}
+            </div>
+            <div class="step-time">${timeAgo(step.timestamp)}</div>
+          </div>`;
+    }).join('');
 }
 
-async function doExport() {
-    if (!_currentSession) return alert(t('export.no_session'));
-    const btn = document.getElementById('btn-export');
-    btn.textContent = t('export.btn_exporting');
-    btn.disabled = true;
-
-    try {
-        const [session, { content, ext }] = await Promise.all([
-            Sessions.get(_currentSession),
-            buildExport(_currentSession, _fmt),
-        ]);
-
-        // Include real screenshots in JSON
-        let finalContent = content;
-        if (_fmt === 'json') {
-            const steps = await Steps.getBySession(_currentSession);
-            const parsed = JSON.parse(content);
-            parsed.steps = steps.map((s, i) => ({
-                ...parsed.steps[i],
-                screenshot: s.screenshot || undefined,
-            }));
-            finalContent = JSON.stringify(parsed, null, 2);
-        }
-
-        const blob = new Blob([finalContent], {
-            type: ext === 'json' ? 'application/json' : 'text/markdown',
-        });
-
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        const name = `bug-report-${session?.hostname || 'unknown'}-${Date.now()}.${ext}`;
-        a.href = url; a.download = name;
-        a.click();
-        URL.revokeObjectURL(url);
-
-        btn.textContent = t('export.btn_exported');
-        setTimeout(() => { btn.textContent = t('export.btn_export'); btn.disabled = false; }, 2000);
-    } catch (e) {
-        btn.textContent = t('export.btn_export');
-        btn.disabled = false;
-        console.error(e);
+function renderNetworks() {
+    const target = document.getElementById('detail-networks');
+    const nets = _steps.filter(s => s.type === 'network');
+    if (!nets.length) {
+        target.innerHTML = emptyBlock(t('details.empty_networks'));
+        return;
     }
+
+    target.innerHTML = nets.map(step => {
+        const statusBad = step.status >= 400 || step.error;
+        const statusLine = step.error
+            ? `<div class="step-selector" style="color:var(--danger)">Error: ${esc(step.error)}</div>`
+            : (step.status >= 400
+                ? `<div class="step-selector" style="color:var(--danger)">HTTP ${step.status}</div>`
+                : '');
+        return `
+          <div class="card-mini">
+            <div class="step-icon icon-network"></div>
+            <div class="step-body">
+              <div class="row" style="gap:6px;margin-bottom:2px">
+                <span class="badge badge-yellow">network</span>
+                <span class="step-action">${esc(step.method || '')} ${esc(String(step.status || ''))}</span>
+                ${statusBad ? '' : ''}
+              </div>
+              <div class="step-selector">${esc(step.url || '')}</div>
+              ${step.body ? `<div class="step-selector" style="color:var(--text-subtle)">body: ${esc(String(step.body).slice(0, 120))}</div>` : ''}
+              ${statusLine}
+            </div>
+            <div class="step-time">${timeAgo(step.timestamp)}</div>
+          </div>`;
+    }).join('');
 }
 
-async function doCopy() {
-    if (!_currentSession) return;
-    const { content } = await buildExport(_currentSession, _fmt);
-    await navigator.clipboard.writeText(content).catch(() => null);
-    const btn = document.getElementById('btn-copy-export');
-    btn.textContent = '✓';
-    setTimeout(() => { btn.textContent = '📋'; }, 1500);
+function renderImages() {
+    const target = document.getElementById('detail-images');
+    const imgs = _steps.filter(s => s.screenshot);
+    if (!imgs.length) {
+        target.innerHTML = emptyBlock(t('details.empty_images'));
+        return;
+    }
+
+    target.innerHTML = `
+      <div class="image-grid">
+        ${imgs.map(step => `
+          <div class="image-card">
+            <img src="${step.screenshot}" alt="screenshot" loading="lazy" />
+            <div class="image-meta">
+              <span>${formatTime(step.timestamp)}</span>
+              <span>${esc(step.label || step.action || step.type || '')}</span>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
 }
 
-function copyAIPrompt() {
-    const prompt = `You are a senior fullstack engineer. Analyze the bug report below and provide:
-1. Root cause
-2. Specific fix with code example
-3. Reproduction steps to verify the fix
-4. Edge cases to consider
-
-Bug Report:
----
-[Paste export content here]`;
-    navigator.clipboard.writeText(prompt).catch(() => null);
-    const btn = document.getElementById('btn-copy-prompt');
-    btn.textContent = t('export.ai_prompt_copied');
-    setTimeout(() => { btn.textContent = t('export.ai_prompt_copy'); }, 2000);
+function renderEmpty() {
+    document.getElementById('detail-session-url').textContent = t('details.no_session');
+    document.getElementById('detail-session-time').textContent = '--:--';
+    document.getElementById('detail-session-duration').textContent = '--';
+    document.getElementById('detail-session-note').textContent = '';
+    document.getElementById('detail-count-steps').textContent = `${t('details.count_steps')}: 0`;
+    document.getElementById('detail-count-networks').textContent = `${t('details.count_networks')}: 0`;
+    document.getElementById('detail-count-images').textContent = `${t('details.count_images')}: 0`;
+    document.getElementById('detail-steps').innerHTML = emptyBlock(t('details.no_session'));
+    document.getElementById('detail-networks').innerHTML = emptyBlock(t('details.no_session'));
+    document.getElementById('detail-images').innerHTML = emptyBlock(t('details.no_session'));
 }
 
-function typeIcon(type) {
-    return { click: '', input: '', submit: '', network: '', navigate: '', error: '' }[type] || '';
+function emptyBlock(text) {
+    return `
+      <div class="empty">
+        <div class="empty-icon"></div>
+        <div class="empty-title">${esc(text)}</div>
+      </div>`;
 }
-function capitalize(s) { return s ? s[0].toUpperCase() + s.slice(1) : ''; }

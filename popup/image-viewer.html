@@ -1,23 +1,26 @@
 <!doctype html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Image Viewer</title>
-  <link rel="stylesheet" href="../assets/styles/popup.css" />
-  <link rel="stylesheet" href="image-viewer.css" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Image Viewer</title>
+    <link rel="stylesheet" href="../assets/styles/popup.css" />
+    <link rel="stylesheet" href="image-viewer.css" />
 </head>
+
 <body>
-  <div class="viewer">
-    <div class="viewer-bar">
-      <div class="viewer-title">Screenshot</div>
-      <button class="btn btn-ghost btn-sm" id="btn-close">Close</button>
+    <div class="viewer">
+        <div class="viewer-bar">
+            <div class="viewer-title">Screenshot</div>
+            <button class="btn btn-ghost btn-sm" id="btn-close">Close</button>
+        </div>
+        <div class="viewer-stage">
+            <img id="viewer-img" alt="screenshot" />
+        </div>
+        <div class="viewer-note" id="viewer-note"></div>
     </div>
-    <div class="viewer-stage">
-      <img id="viewer-img" alt="screenshot" />
-    </div>
-    <div class="viewer-note" id="viewer-note"></div>
-  </div>
-  <script type="module" src="image-viewer.js"></script>
+    <script type="module" src="image-viewer.js"></script>
 </body>
+
 </html>

@@ -18,6 +18,10 @@ export function initRecorderTab(onStepsUpdate, onViewSite) {
     const START_STOP_SHORTCUT = 'Cmd+Shift+Y';
     const SCREENSHOT_SHORTCUT = 'Cmd+Shift+S';
 
+    if (!btnStart || !btnShot || !elapsedEl) {
+        return { getState: () => _state };
+    }
+
     btnStart.title = `${t('recorder.start_btn')} (${START_STOP_SHORTCUT})`;
     if (btnShot?.title && !btnShot.title.includes(SCREENSHOT_SHORTCUT)) {
         btnShot.title = `${btnShot.title} (${SCREENSHOT_SHORTCUT})`;
@@ -31,8 +35,10 @@ export function initRecorderTab(onStepsUpdate, onViewSite) {
         const state = await sendMsg({ type: 'GET_STATE' });
         if (!state) return;
         const fullUrl = state.url || 'Unknown URL';
-        sessionUrl.title = fullUrl;
-        sessionUrl.textContent = shorten(fullUrl, 56);
+        if (sessionUrl) {
+            sessionUrl.title = fullUrl;
+            sessionUrl.textContent = shorten(toOrigin(fullUrl), 56);
+        }
         if (state.recording && state.sessionId) {
             enterRecording(state.sessionId, state.startedAt || null);
         } else {
@@ -50,8 +56,8 @@ export function initRecorderTab(onStepsUpdate, onViewSite) {
                 exitRecording();
                 onStepsUpdate && onStepsUpdate(res.sessionId);
                 if (btnView) {
-                    btnView.style.display = 'inline-flex';
                     btnView.dataset.sessionId = res.sessionId;
+                    btnView.disabled = false;
                 }
             }
         } else {
@@ -61,7 +67,10 @@ export function initRecorderTab(onStepsUpdate, onViewSite) {
             btnStart.disabled = false;
             if (res?.ok) {
                 enterRecording(res.sessionId);
-                if (btnView) btnView.style.display = 'none';
+                if (btnView) {
+                    btnView.disabled = true;
+                    delete btnView.dataset.sessionId;
+                }
             } else {
                 showError(res?.error);
             }
@@ -76,14 +85,16 @@ export function initRecorderTab(onStepsUpdate, onViewSite) {
     });
 
     let noteTimer;
-    noteField.addEventListener('input', () => {
-        clearTimeout(noteTimer);
-        noteTimer = setTimeout(() => {
-            if (_state.sessionId) {
-                sendMsg({ type: 'ADD_NOTE', sessionId: _state.sessionId, note: noteField.value });
-            }
-        }, 1000);
-    });
+    if (noteField) {
+        noteField.addEventListener('input', () => {
+            clearTimeout(noteTimer);
+            noteTimer = setTimeout(() => {
+                if (_state.sessionId) {
+                    sendMsg({ type: 'ADD_NOTE', sessionId: _state.sessionId, note: noteField.value });
+                }
+            }, 1000);
+        });
+    }
 
     function enterRecording(sessionId, startedAt = null) {
         const baseStart = startedAt && !Number.isNaN(startedAt) ? startedAt : Date.now();
@@ -93,7 +104,7 @@ export function initRecorderTab(onStepsUpdate, onViewSite) {
         btnStart.className = 'btn btn-danger btn-record';
         btnShot.disabled = false;
         setStatus('active', t('recorder.recording'));
-        logoDot.classList.add('recording');
+        logoDot?.classList.add('recording');
         startTimer();
     }
 
@@ -104,13 +115,13 @@ export function initRecorderTab(onStepsUpdate, onViewSite) {
         btnStart.className = 'btn btn-primary btn-record';
         btnShot.disabled = true;
         setStatus('idle', t('recorder.ready'));
-        logoDot.classList.remove('recording');
+        logoDot?.classList.remove('recording');
         stopTimer();
     }
 
     function setStatus(cls, text) {
-        statusBar.className = `status-bar ${cls}`;
-        statusText.textContent = text;
+        if (statusBar) statusBar.className = `status-bar ${cls}`;
+        if (statusText) statusText.textContent = text;
     }
 
     function startTimer() {
@@ -128,10 +139,15 @@ export function initRecorderTab(onStepsUpdate, onViewSite) {
     }
 
     if (btnView) {
-        btnView.addEventListener('click', () => {
+        btnView.disabled = true;
+
+        const tryOpenDetail = () => {
+            if (btnView.disabled) return;
             const sid = Number(btnView.dataset.sessionId);
             if (sid && onViewSite) onViewSite(sid);
-        });
+        };
+
+        btnView.addEventListener('click', tryOpenDetail);
     }
 
     return { getState: () => _state };
@@ -178,4 +194,12 @@ function shorten(s, max) {
     const str = String(s || '');
     if (str.length <= max) return str;
     return str.slice(0, Math.max(0, max - 1)) + '…';
+}
+
+function toOrigin(url) {
+    try {
+        return new URL(url).origin;
+    } catch {
+        return String(url || 'Unknown URL');
+    }
 }

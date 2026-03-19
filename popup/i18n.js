@@ -6,17 +6,17 @@ const TRANSLATIONS = {
 	en: {
 		tabs: {
 			home: 'HOME',
-			sitemap: 'SITE-MAP',
-			stats: 'STATS',
-			settings: 'SETTINGS'
+			sitemap: 'TRACE',
+			stats: 'HISTORY',
+			settings: 'CONFIG'
 		},
 		recorder: {
-			ready: 'Ready to record',
 			recording: 'Recording...',
-			start_btn: 'Start Recording',
-			stop_btn: 'Stop Recording',
+			ready: 'Ready to record',
+			start_btn: 'RECORDING',
+			stop_btn: 'STOP',
 			screenshot_btn: 'Capture Screenshot',
-			view_site: 'View Site Details',
+			view_site: 'View Detail',
 			session_prompt: 'Choose a tab to start...',
 			note_label: 'Notes',
 			note_placeholder: 'Describe bug or context... (auto-saved)',
@@ -86,17 +86,17 @@ const TRANSLATIONS = {
 	vi: {
 		tabs: {
 			home: 'HOME',
-			sitemap: 'SITE-MAP',
-			stats: 'THỐNG KÊ',
-			settings: 'CÀI ĐẶT'
+			sitemap: 'TRACE',
+			stats: 'HISTORY',
+			settings: 'CONFIG'
 		},
 		recorder: {
-			ready: 'Sẵn sàng ghi',
 			recording: 'Đang ghi...',
+			ready: 'Sẵn sàng ghi',
 			start_btn: 'Bắt đầu ghi',
 			stop_btn: 'Dừng ghi',
 			screenshot_btn: 'Chụp ảnh màn hình',
-			view_site: 'Xem chi tiết site',
+			view_site: 'Xem chi tiết',
 			session_prompt: 'Chọn tab để bắt đầu...',
 			note_label: 'Ghi chú',
 			note_placeholder: 'Mô tả bug hoặc context... (lưu tự động)',

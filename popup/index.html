@@ -1,17 +1,13 @@
 <!doctype html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>NebulaTraceX</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link
-        href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
-        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="../assets/styles/popup.css" />
 </head>
-
 <body>
     <div class="app" id="app">
         <header class="header">
@@ -19,91 +15,46 @@
                 <span class="logo-dot" id="logo-dot"></span>
                 NebulaTraceX
             </div>
-            <div class="row" style="gap: 6px">
-                <button class="theme-btn" id="theme-toggle" title="Toggle dark mode">Dark</button>
-            </div>
+            <button class="theme-btn" id="theme-toggle" title="Toggle dark mode">Dark</button>
         </header>
 
-        <!-- Tabs nav -->
         <nav class="tabs-bar">
-            <button class="tab-btn active" data-tab="home" data-i18n="tabs.home">HOME</button>
+            <button class="tab-btn active" data-tab="home" data-i18n="tabs.home">Home</button>
             <button class="tab-btn" data-tab="sitemap">
-                <span data-i18n="tabs.sitemap">SITE-MAP</span>
+                <span data-i18n="tabs.sitemap">Sitemap</span>
                 <span class="tab-badge" id="badge-steps">0</span>
             </button>
-            <button class="tab-btn" data-tab="stats" data-i18n="tabs.stats">STATS</button>
-            <button class="tab-btn" data-tab="settings" data-i18n="tabs.settings">SETTINGS</button>
+            <button class="tab-btn" data-tab="stats" data-i18n="tabs.stats">Stats</button>
+            <button class="tab-btn" data-tab="settings" data-i18n="tabs.settings">Settings</button>
         </nav>
 
         <div class="tab-content">
-  
-
             <div class="tab-panel active" id="tab-home">
+                <br>
                 <div class="home-shell">
-                    <div class="home-top">
-                        <div class="home-icon">🔍</div>
-                        <div class="home-icon">🔔</div>
-                    </div>
-
-                    <div class="home-card">
-                        <div class="home-card-title">NebulaTraceX</div>
-                        <div class="home-card-sub">Quick capture</div>
-                    </div>
-
-                    <div class="home-actions">
-                        <button class="btn btn-primary btn-record" id="btn-start" data-i18n="recorder.start_btn">
-                            Start Recording
-                        </button>
-                        <button class="btn btn-ghost btn-record btn-capture" id="btn-screenshot" data-i18n-attr="title"
-                            data-i18n="recorder.screenshot_btn">
-                            Capture
-                        </button>
-                    </div>
-
-                    <div class="home-stats">
-                        <div class="home-pill">2/4</div>
-                        <div class="home-timer" id="elapsed-time" style="font-variant-numeric: tabular-nums">00:00</div>
-                        <div class="home-pill">●</div>
-                    </div>
-
-                    <div class="status-bar idle home-status" id="status-bar">
-                        <span><span class="status-dot"></span><span id="status-text" data-i18n="recorder.ready">Ready to record</span></span>
-                    </div>
-
-                    <div class="home-site-card">
-                        <div class="home-site-title">Amazon</div>
-                        <div class="session-info" id="session-url" data-i18n="recorder.session_prompt">
-                            Choose a tab to start...
+                        <div class="home-slider" id="side-carousel">
+                            
                         </div>
-                    </div>
-
-                    <div class="note-wrap">
-                        <div class="section-label" data-i18n="recorder.note_label">Notes</div>
-                        <textarea class="field" id="session-note" rows="4" data-i18n="recorder.note_placeholder"
-                            data-i18n-attr="placeholder" placeholder="Describe bug or context... (auto-saved)"></textarea>
-                    </div>
-
+                        <br>
                     <div class="home-actions">
-                        <button class="btn btn-ghost btn-sm" id="btn-view-site" data-i18n="recorder.view_site"
-                            style="display:none">
-                            View Site Details
-                        </button>
+                        <button class="btn btn-primary btn-record home-recording-btn" id="btn-start" data-i18n="recorder.start_btn">RECORDING</button>
+                        <button class="btn btn-ghost btn-record home-capture-btn" id="btn-screenshot" data-i18n="recorder.screenshot_btn" data-i18n-attr="title">CAPTURE</button>
                     </div>
+
+                    <div class="home-time-pill" id="elapsed-time" style="font-variant-numeric: tabular-nums">00:00</div>
+                    <button class="home-time-pill" id="btn-view-site" data-i18n="recorder.view_site" disabled>VIEW DETAILS</button>
                 </div>
             </div>
 
             <div class="tab-panel" id="tab-sitemap">
                 <div class="search-box">
-                    <span style="color: var(--text-subtle); font-size: 13px">Search</span>
-                    <input type="text" id="sitemap-search" data-i18n="sitemap.search_placeholder"
-                        data-i18n-attr="placeholder" placeholder="Search site..." />
+                    <input type="text" id="sitemap-search" data-i18n="sitemap.search_placeholder" data-i18n-attr="placeholder" placeholder="Search site..." />
                 </div>
                 <div id="sitemap-list"></div>
 
                 <div class="sitemap-detail" id="sitemap-detail" style="display:none">
                     <div class="row-between" style="margin-bottom:8px">
-                        <button class="btn btn-ghost btn-sm" id="btn-back-sitemap"
-                            data-i18n="sitemap.back">Back</button>
+                        <button class="btn btn-ghost btn-sm" id="btn-back-sitemap" data-i18n="sitemap.back">Back</button>
                         <span class="badge badge-gray" id="sitemap-hostname"></span>
                     </div>
                     <div class="card" style="margin-bottom:8px">
@@ -116,10 +67,8 @@
                     </div>
 
                     <div class="toggle-group detail-tabs">
-                        <button class="toggle-btn active" data-site-tab="steps"
-                            data-i18n="details.tab_steps">Steps</button>
-                        <button class="toggle-btn" data-site-tab="networks"
-                            data-i18n="details.tab_networks">Networks</button>
+                        <button class="toggle-btn active" data-site-tab="steps" data-i18n="details.tab_steps">Steps</button>
+                        <button class="toggle-btn" data-site-tab="networks" data-i18n="details.tab_networks">Networks</button>
                         <button class="toggle-btn" data-site-tab="images" data-i18n="details.tab_images">Images</button>
                     </div>
 
@@ -138,31 +87,23 @@
                     <div class="skeleton" style="height: 200px; border-radius: 8px"></div>
                 </div>
 
-                <div id="stats-content" style="display: none">
-                    <div class="chart-wrap" style="display: flex; gap: 12px; align-items: center">
-                        <canvas id="chart-pie" width="100" height="100" style="flex-shrink: 0"></canvas>
-                        <div id="chart-legend" style="font-size: 11px; line-height: 1.8"></div>
+                <div id="stats-content" style="display:none">
+                    <div class="chart-wrap">
+                        <canvas id="chart-bar" height="120"></canvas>
+                    </div>
+                    <div class="chart-wrap" style="display:flex;gap:12px;align-items:center">
+                        <canvas id="chart-pie" width="100" height="100" style="flex-shrink:0"></canvas>
+                        <div id="chart-legend" style="font-size:11px;line-height:1.8"></div>
                     </div>
 
-                    <div style="overflow-x: auto">
+                    <div style="overflow-x:auto">
                         <table class="stats-table" id="stats-table">
                             <thead>
                                 <tr>
-                                    <th data-col="displayName">
-                                        <span data-i18n="stats.col_project">Project</span> <span
-                                            class="sort-arrow"></span>
-                                    </th>
-                                    <th data-col="sessionCount">
-                                        <span data-i18n="stats.col_sessions">Sessions</span> <span
-                                            class="sort-arrow"></span>
-                                    </th>
-                                    <th data-col="stepCount">
-                                        <span data-i18n="stats.col_steps">Steps</span> <span class="sort-arrow"></span>
-                                    </th>
-                                    <th data-col="errorCount">
-                                        <span data-i18n="stats.col_errors">Errors</span> <span
-                                            class="sort-arrow"></span>
-                                    </th>
+                                    <th data-col="displayName"><span data-i18n="stats.col_project">Project</span> <span class="sort-arrow"></span></th>
+                                    <th data-col="sessionCount"><span data-i18n="stats.col_sessions">Sessions</span> <span class="sort-arrow"></span></th>
+                                    <th data-col="stepCount"><span data-i18n="stats.col_steps">Steps</span> <span class="sort-arrow"></span></th>
+                                    <th data-col="errorCount"><span data-i18n="stats.col_errors">Errors</span> <span class="sort-arrow"></span></th>
                                 </tr>
                             </thead>
                             <tbody id="stats-tbody"></tbody>
@@ -170,18 +111,14 @@
                     </div>
 
                     <div class="divider"></div>
-                    <button class="btn btn-ghost btn-sm btn-full" id="btn-clear" style="color: var(--danger)"
-                        data-i18n="stats.btn_clear">
-                        Clear all data
-                    </button>
+                    <button class="btn btn-ghost btn-sm btn-full" id="btn-clear" style="color:var(--danger)" data-i18n="stats.btn_clear">Clear all data</button>
                 </div>
             </div>
+
             <div class="tab-panel" id="tab-settings">
                 <div class="card">
                     <div class="section-label" data-i18n="settings.title">Settings</div>
-                    <div style="font-size:12px;color:var(--text-muted);line-height:1.5">
-                        <div data-i18n="settings.desc">This section will contain preferences and advanced options.</div>
-                    </div>
+                    <div style="font-size:12px;color:var(--text-muted);line-height:1.5" data-i18n="settings.desc">This section will contain preferences and advanced options.</div>
                 </div>
             </div>
         </div>
@@ -190,22 +127,18 @@
             <div class="image-modal-backdrop" id="image-modal-backdrop"></div>
             <div class="image-modal-card">
                 <div class="image-modal-toolbar">
-                    <button class="btn btn-ghost btn-sm" id="image-modal-open" data-i18n="sitemap.open_window">Open
-                        Window</button>
+                    <button class="btn btn-ghost btn-sm" id="image-modal-open" data-i18n="sitemap.open_window">Open Window</button>
                     <div class="row" style="gap:6px">
                         <button class="btn btn-ghost btn-sm" id="image-modal-pen" data-i18n="sitemap.pen">Pen</button>
-                        <button class="btn btn-ghost btn-sm" id="image-modal-clear"
-                            data-i18n="sitemap.clear">Clear</button>
-                        <button class="btn btn-primary btn-sm" id="image-modal-save"
-                            data-i18n="sitemap.save">Save</button>
+                        <button class="btn btn-ghost btn-sm" id="image-modal-clear" data-i18n="sitemap.clear">Clear</button>
+                        <button class="btn btn-primary btn-sm" id="image-modal-save" data-i18n="sitemap.save">Save</button>
                     </div>
                 </div>
                 <div class="image-modal-stage">
                     <img id="image-modal-img" alt="screenshot" />
                     <canvas id="image-modal-canvas"></canvas>
                 </div>
-                <textarea class="field" id="image-modal-note" rows="2" data-i18n="sitemap.image_note"
-                    data-i18n-attr="placeholder" placeholder="Add a note for this image..."></textarea>
+                <textarea class="field" id="image-modal-note" rows="2" data-i18n="sitemap.image_note" data-i18n-attr="placeholder" placeholder="Add a note for this image..."></textarea>
                 <div class="row-between" style="margin-top:6px">
                     <span id="image-modal-time" style="font-size:11px;color:var(--text-subtle)"></span>
                     <button class="btn btn-ghost btn-sm" id="image-modal-close" data-i18n="sitemap.close">Close</button>
@@ -213,8 +146,6 @@
             </div>
         </div>
     </div>
-
     <script src="popup.js" type="module"></script>
 </body>
-
 </html>

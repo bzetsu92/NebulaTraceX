@@ -287,6 +287,18 @@ body {
   color: var(--text-muted);
 }
 
+.btn-icon {
+  width: 34px;
+  padding: 0;
+  font-size: 16px;
+}
+
+.btn.active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
 .btn-sm {
   height: 32px;
   font-size: 12px;
@@ -349,11 +361,94 @@ body {
   resize: none;
 }
 
-#sitemap-list {
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--bg);
-  padding: 8px;
+#trace-list {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+}
+
+.session-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 6px;
+  border-radius: 0;
+  border: 0;
+  background: transparent;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 0;
+  cursor: pointer;
+}
+
+.session-row:last-child {
+  border-bottom: 0;
+}
+
+.session-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.session-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.session-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.session-title {
+  font: 700 13px var(--font);
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.session-steps {
+  font: 600 9px var(--font);
+  color: var(--text-subtle);
+  background: transparent;
+  border: 0;
+  padding: 0;
+  white-space: nowrap;
+}
+
+.session-sub {
+  font: 500 10px var(--font);
+  color: var(--text-subtle);
+  margin-bottom: 0;
+}
+
+.session-sub:last-child {
+  margin-bottom: 0;
+}
+
+.favicon {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: var(--bg-soft);
+  border: 0;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+}
+
+.favicon-fallback {
+  font: 700 12px var(--font);
+  color: var(--text-subtle);
 }
 
 .search-box {
@@ -362,6 +457,21 @@ body {
   background: var(--bg);
   padding: 8px 12px;
   margin-bottom: 12px;
+}
+
+.trace-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 6px 0 10px;
+}
+
+.trace-toolbar-title {
+  font: 700 12px var(--font);
+  color: var(--text-subtle);
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
 }
 
 .search-box input {
@@ -390,6 +500,83 @@ body {
   align-items: flex-start;
   gap: 12px;
   margin-bottom: 8px;
+}
+
+.btn-danger {
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 30%, var(--border));
+}
+
+.btn-danger:hover {
+  background: color-mix(in srgb, var(--danger) 8%, transparent);
+}
+
+.settings-card {
+  margin-bottom: 12px;
+}
+
+.settings-desc {
+  font: 500 12px var(--font);
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-bottom: 10px;
+}
+
+.settings-label {
+  display: block;
+  font: 600 11px var(--font);
+  color: var(--text-subtle);
+  margin: 10px 0 6px;
+}
+
+.settings-grid {
+  display: grid;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.settings-grid-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.settings-grid-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.settings-checks {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 12px;
+}
+
+.settings-checks-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.check-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font: 600 12px var(--font);
+  color: var(--text);
+}
+
+.check-row input {
+  accent-color: var(--accent);
+}
+
+.settings-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.settings-status {
+  flex: 1;
+  font: 600 11px var(--font);
+  color: var(--text-subtle);
 }
 
 .empty {
@@ -422,11 +609,11 @@ body {
 }
 
 /* Trace Detail Elements */
-.sitemap-detail {
+.trace-detail {
   animation: fadeIn 0.3s ease-out;
 }
 
-.sitemap-detail .card {
+.trace-detail .card {
   box-shadow: var(--shadow);
   margin-bottom: 12px;
   border-radius: 14px;
@@ -521,6 +708,64 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+}
+
+.detail-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.detail-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 6px;
+}
+
+.detail-top .btn {
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 9px;
+}
+
+.detail-top .btn-icon {
+  width: 30px;
+  padding: 0;
+}
+
+.step-head {
+  margin-bottom: 2px;
+}
+
+.btn-del {
+  min-width: 36px;
+  height: 26px;
+  padding: 0 8px;
+  border-radius: 8px;
+  color: var(--danger);
+  background: var(--bg-soft);
+  border-color: var(--border);
+  font: 700 11px var(--font);
+}
+
+.btn-del:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--danger) 12%, var(--bg-soft));
+}
+
+.image-card {
+  position: relative;
+}
+
+.image-del {
+  position: absolute;
+  top: 8px;
+  right: 8px;
 }
 
 .step-icon {
@@ -636,6 +881,59 @@ body {
   color: var(--text-subtle);
   background: var(--bg-soft);
 }
+
+.image-modal {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.image-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(6, 10, 18, 0.6);
+}
+
+.image-modal-card {
+  position: relative;
+  width: 96%;
+  max-width: 520px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 10px;
+  box-shadow: var(--shadow);
+  z-index: 2;
+}
+
+.image-modal-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.image-modal-stage {
+  position: relative;
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--bg-soft);
+  max-height: 340px;
+  overflow: auto;
+}
+
+.image-modal-stage img {
+  width: 100%;
+  display: block;
+}
+
 
 @keyframes fadeIn {
   from {

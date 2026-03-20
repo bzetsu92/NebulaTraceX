@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NebulaTraceX Editor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="editor.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="title">NebulaTraceX Editor</div>
+      <div class="toolbar">
+        <button class="btn" id="btn-pen">Pen</button>
+        <button class="btn" id="btn-text">Text</button>
+        <button class="btn" id="btn-undo">Undo</button>
+        <button class="btn" id="btn-clear">Clear</button>
+        <div class="spacer"></div>
+        <button class="btn" id="btn-zoom-out">-</button>
+        <button class="btn" id="btn-zoom-in">+</button>
+        <button class="btn" id="btn-zoom-reset">100%</button>
+        <button class="btn" id="btn-download">Download</button>
+        <button class="btn btn-primary" id="btn-save">Save</button>
+        <button class="btn" id="btn-close">Close</button>
+      </div>
+    </header>
+
+    <main class="stage-wrap">
+      <div class="stage" id="stage">
+        <div class="zoom" id="zoom">
+          <img id="img" alt="screenshot" />
+          <canvas id="canvas"></canvas>
+          <div class="overlay" id="overlay"></div>
+        </div>
+      </div>
+      <aside class="side">
+        <div class="side-title">Note</div>
+        <textarea id="note" rows="6" placeholder="Add a note..."></textarea>
+        <div class="meta" id="meta"></div>
+        <div class="error" id="error" style="display:none"></div>
+      </aside>
+    </main>
+  </div>
+
+  <div class="toast" id="toast">Saved</div>
+  <script type="module" src="editor.js"></script>
+</body>
+</html>

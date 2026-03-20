@@ -1,30 +1,41 @@
+const CONSTS = window.__nebulaTraceXConsts || {};
+const getDataTestAttrs = () => CONSTS.dataTestAttrs || CONSTS.DATA_TEST_ATTRS || [];
+
 function getSelector(el) {
     if (!el || el === document.body) return { selector: 'body', strategy: 'tag' };
 
-    for (const attr of ['data-testid', 'data-cy', 'data-qa', 'data-id', 'data-test']) {
+    for (const attr of getDataTestAttrs()) {
         const val = el.getAttribute(attr);
-        if (val && isUnique(`[${attr}="${CSS.escape(val)}"]`)) {
-            return { selector: `[${attr}="${CSS.escape(val)}"]`, strategy: attr };
+        if (val) {
+            const s = `[${attr}="${CSS.escape(val)}"]`;
+            if (isUnique(el, s)) return { selector: s, strategy: attr };
         }
     }
 
-    if (el.id && !isGeneratedId(el.id) && isUnique(`#${CSS.escape(el.id)}`)) {
-        return { selector: `#${CSS.escape(el.id)}`, strategy: 'id' };
+    if (el.id && !isGeneratedId(el.id)) {
+        const s = `#${CSS.escape(el.id)}`;
+        if (isUnique(el, s)) return { selector: s, strategy: 'id' };
     }
 
     const ariaLabel = el.getAttribute('aria-label');
     if (ariaLabel) {
         const s = `${el.tagName.toLowerCase()}[aria-label="${CSS.escape(ariaLabel)}"]`;
-        if (isUnique(s)) return { selector: s, strategy: 'aria-label' };
+        if (isUnique(el, s)) return { selector: s, strategy: 'aria-label' };
+    }
+
+    const title = el.getAttribute('title');
+    if (title) {
+        const s = `${el.tagName.toLowerCase()}[title="${CSS.escape(title)}"]`;
+        if (isUnique(el, s)) return { selector: s, strategy: 'title' };
     }
 
     if (el.name && ['INPUT', 'SELECT', 'TEXTAREA', 'BUTTON'].includes(el.tagName)) {
         const s = `${el.tagName.toLowerCase()}[name="${CSS.escape(el.name)}"]`;
-        if (isUnique(s)) return { selector: s, strategy: 'name' };
+        if (isUnique(el, s)) return { selector: s, strategy: 'name' };
     }
 
     const classSelector = buildClassSelector(el);
-    if (classSelector && isUnique(classSelector)) {
+    if (classSelector && isUnique(el, classSelector)) {
         return { selector: classSelector, strategy: 'class' };
     }
 
@@ -34,8 +45,10 @@ function getSelector(el) {
     return { selector: getXPath(el), strategy: 'xpath' };
 }
 
-function isUnique(selector) {
+function isUnique(el, selector) {
     try {
+        const first = document.querySelector(selector);
+        if (first !== el) return false;
         return document.querySelectorAll(selector).length === 1;
     } catch { return false; }
 }
@@ -92,27 +105,64 @@ function getXPath(el) {
     return '/' + parts.join('/');
 }
 
-const SENSITIVE_TYPES = new Set(['password', 'hidden', 'credit-card', 'token']);
+const getSensitiveTypes = () => CONSTS.sensitiveTypes || CONSTS.SENSITIVE_TYPES || [];
+const getIgnoreSelector = () => CONSTS.ignoreSelector || CONSTS.IGNORE_SELECTOR || '';
+const getMaskPatterns = () => CONSTS.maskPatterns || CONSTS.MASK_PATTERNS || [];
+const getNetworkConfig = () => CONSTS.network || CONSTS.NETWORK_CONFIG || null;
 
-const PATTERNS = [
-    { re: /\S+@\S+\.\S+/g, mask: '[EMAIL]' },
-    { re: /\b\d{4}[\s\-]?\d{4}[\s\-]?\d{4}[\s\-]?\d{4}\b/g, mask: '[CARD]' },
-    { re: /\b(\+\d{1,3}[\s\-]?)?\(?\d{3}\)?[\s\-]?\d{3}[\s\-]?\d{4}\b/g, mask: '[PHONE]' },
-    { re: /eyJ[a-zA-Z0-9\-_]+\.[a-zA-Z0-9\-_]+\.[a-zA-Z0-9\-_]*/g, mask: '[JWT]' },
-    { re: /Bearer\s+[a-zA-Z0-9\-_\.]+/gi, mask: '[TOKEN]' },
-];
+function buildNetworkConfig() {
+    const net = getNetworkConfig();
+    if (!net || typeof net !== 'object') return null;
+    const maskPatterns = getMaskPatterns().map((p) => {
+        if (!p || !p.mask) return null;
+        if (p.re instanceof RegExp) {
+            return { re: p.re.source, flags: p.re.flags || 'g', mask: p.mask };
+        }
+        if (typeof p.re === 'string') {
+            return { re: p.re, flags: p.flags || 'g', mask: p.mask };
+        }
+        return null;
+    }).filter(Boolean);
+
+    return {
+        ignoreExtensions: Array.isArray(net.ignoreExtensions) ? net.ignoreExtensions : [],
+        blockedHostPatterns: Array.isArray(net.blockedHostPatterns) ? net.blockedHostPatterns : [],
+        ignoreUrlPatterns: Array.isArray(net.ignoreUrlPatterns) ? net.ignoreUrlPatterns : [],
+        ignoreMethods: Array.isArray(net.ignoreMethods) ? net.ignoreMethods : [],
+        captureBodyMethods: Array.isArray(net.captureBodyMethods) ? net.captureBodyMethods : [],
+        maxUrlLength: Number.isFinite(net.maxUrlLength) ? net.maxUrlLength : undefined,
+        maxBodyLength: Number.isFinite(net.maxBodyLength) ? net.maxBodyLength : undefined,
+        maxFormKeys: Number.isFinite(net.maxFormKeys) ? net.maxFormKeys : undefined,
+        maskPatterns,
+    };
+}
+
+function postNetworkConfig() {
+    const send = () => {
+        const netConfig = buildNetworkConfig();
+        if (netConfig) {
+            window.postMessage({ source: NET_CHANNEL, type: 'net-config', payload: netConfig }, '*');
+        }
+    };
+    const ready = window.__nebulaTraceXConstsReady;
+    if (ready && typeof ready.then === 'function') {
+        ready.then(send).catch(() => send());
+        return;
+    }
+    send();
+}
 
 function maskValue(value) {
     if (typeof value !== 'string' || !value) return value;
     let result = value;
-    for (const { re, mask } of PATTERNS) result = result.replace(re, mask);
+    for (const { re, mask } of getMaskPatterns()) result = result.replace(re, mask);
     return result;
 }
 
 function isSensitiveElement(el) {
     if (!el) return false;
     const type = (el.type || '').toLowerCase();
-    if (SENSITIVE_TYPES.has(type)) return true;
+    if (getSensitiveTypes().includes(type)) return true;
     if (el.autocomplete && ['current-password', 'new-password', 'cc-number'].includes(el.autocomplete)) return true;
     const name = (el.name || el.id || '').toLowerCase();
     return /password|passwd|token|secret|cvv|ccnum/i.test(name);
@@ -241,6 +291,14 @@ window.__nebulaTraceX = {
 
 const _handlers = {};
 
+if (chrome?.storage?.onChanged) {
+    chrome.storage.onChanged.addListener((changes, area) => {
+        if (area !== 'local') return;
+        if (!changes.ntxConfig) return;
+        if (_recording) postNetworkConfig();
+    });
+}
+
 function attachListeners() {
     _handlers.click = throttle(onClickGlobal, 100);
     _handlers.input = debounce(onInputGlobal, 600);
@@ -265,15 +323,23 @@ function detachListeners() {
 
 async function onClickGlobal(e) {
     if (!_recording) return;
-    const el = e.target;
+    const raw = e.target;
+    const el = getActionTarget(raw);
+    if (!el || isNoiseClick(el, e)) return;
     const { selector, strategy } = getSelector(el);
-    const label = el.textContent?.trim().slice(0, 80) || el.getAttribute('aria-label') || '';
+    const meta = extractElementMeta(el);
+    const label = meta.label || '';
     const step = {
         type: 'click',
         action: 'click',
         selector,
         selectorStrategy: strategy,
         label,
+        value: meta.value || '',
+        title: meta.title || '',
+        alt: meta.alt || '',
+        href: meta.href || '',
+        src: meta.src || '',
         tag: el.tagName.toLowerCase(),
         x: Math.round(e.clientX),
         y: Math.round(e.clientY),
@@ -299,6 +365,44 @@ function onInputGlobal(e) {
         name: el.name || el.id || '',
         isMasked: isSensitiveElement(el),
     });
+}
+
+function extractElementMeta(el) {
+    if (!el) return { label: '', value: '', title: '', alt: '', href: '', src: '' };
+    const tag = el.tagName.toLowerCase();
+    const title = el.getAttribute('title') || '';
+    const aria = el.getAttribute('aria-label') || '';
+    const text = (el.textContent || '').trim().slice(0, 80);
+    const alt = el.getAttribute('alt') || '';
+
+    let value = '';
+    if (tag === 'input' || tag === 'textarea' || tag === 'select') {
+        value = safeValue(el);
+    } else if (tag === 'button') {
+        value = (el.value || '').slice(0, 120);
+    }
+
+    const href = tag === 'a' ? (el.getAttribute('href') || '') : '';
+    const src = tag === 'img' ? (el.currentSrc || el.getAttribute('src') || '') : '';
+
+    const label = aria || title || alt || text || value || href || src || '';
+    return { label, value, title, alt, href, src };
+}
+
+function getActionTarget(el) {
+    if (!el || el === document.body) return el;
+    const action = el.closest('button, a, input, textarea, select, label, [role=\"button\"], [role=\"link\"], [role=\"tab\"], [role=\"menuitem\"]');
+    return action || el;
+}
+
+function isNoiseClick(el, e) {
+    if (!el) return true;
+    if (e && (e.metaKey || e.ctrlKey || e.altKey)) return false;
+    const ignoreSelector = getIgnoreSelector();
+    if (ignoreSelector && el.closest(ignoreSelector)) return true;
+    const tag = el.tagName.toLowerCase();
+    if (tag === 'svg' || tag === 'path') return true;
+    return false;
 }
 
 function onSubmitGlobal(e) {
@@ -368,6 +472,7 @@ function patchNetwork() {
     };
     window.addEventListener('message', _netListener);
     sendToBackground({ type: 'INIT_NETWORK_HOOK' });
+    postNetworkConfig();
     window.postMessage({ source: NET_CHANNEL, type: 'net-start' }, '*');
     retryNetHook();
 }
@@ -388,6 +493,7 @@ function retryNetHook() {
         if (_netRetry >= 2) return;
         _netRetry++;
         sendToBackground({ type: 'INIT_NETWORK_HOOK' });
+        postNetworkConfig();
         window.postMessage({ source: NET_CHANNEL, type: 'net-start' }, '*');
         retryNetHook();
     }, 700);

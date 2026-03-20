@@ -1,4 +1,4 @@
-import { sendMsg, formatTime, stepIcon, stepBadge, timeAgo } from '../ui/utils.js';
+import { sendMsg } from '../ui/utils.js';
 import { t } from '../i18n.js';
 
 let _state = { recording: false, sessionId: null, startTime: null };
@@ -48,7 +48,6 @@ export function initRecorderTab(onStepsUpdate, onViewSite) {
 
     btnStart.addEventListener('click', async () => {
         if (_state.recording) {
-            // Stop
             btnStart.disabled = true;
             const res = await sendMsg({ type: 'STOP_RECORDING' });
             btnStart.disabled = false;
@@ -56,8 +55,13 @@ export function initRecorderTab(onStepsUpdate, onViewSite) {
                 exitRecording();
                 onStepsUpdate && onStepsUpdate(res.sessionId);
                 if (btnView) {
-                    btnView.dataset.sessionId = res.sessionId;
-                    btnView.disabled = false;
+                    if (res.sessionId) {
+                        btnView.dataset.sessionId = res.sessionId;
+                        btnView.disabled = false;
+                    } else {
+                        delete btnView.dataset.sessionId;
+                        btnView.disabled = true;
+                    }
                 }
             }
         } else {
@@ -151,36 +155,6 @@ export function initRecorderTab(onStepsUpdate, onViewSite) {
     }
 
     return { getState: () => _state };
-}
-
-export function renderRecentSteps(steps) {
-    const container = document.getElementById('recent-steps');
-    if (!steps || !steps.length) {
-        container.innerHTML = `
-      <div class="empty">
-        <div class="empty-icon"></div>
-        <div class="empty-title">${t('recorder.empty_title')}</div>
-        <div class="empty-desc">${t('recorder.empty_desc')}</div>
-      </div>`;
-        return;
-    }
-    const last5 = steps.slice(-5).reverse();
-    container.innerHTML = last5.map(step => renderStepCard(step)).join('');
-}
-
-export function renderStepCard(step) {
-    const { icon, cls } = stepIcon(step.type);
-    const sel = step.selector ? `<div class="step-selector">${esc(step.selector)}</div>` : '';
-    const label = step.label || step.action || step.type;
-    return `
-    <div class="card-mini">
-      <div class="step-icon ${cls}">${icon}</div>
-      <div class="step-body">
-        <div class="step-action">${esc(label)}</div>
-        ${sel}
-      </div>
-      <div class="step-time">${timeAgo(step.timestamp)}</div>
-    </div>`;
 }
 
 function showError(msg) {

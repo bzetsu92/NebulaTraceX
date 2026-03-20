@@ -20,11 +20,10 @@
 
         <nav class="tabs-bar">
             <button class="tab-btn active" data-tab="home" data-i18n="tabs.home">Home</button>
-            <button class="tab-btn" data-tab="sitemap">
-                <span data-i18n="tabs.sitemap">Sitemap</span>
-                <span class="tab-badge" id="badge-steps">0</span>
+            <button class="tab-btn" data-tab="trace">
+                <span data-i18n="tabs.trace">TRACE</span>
+                <span class="tab-badge" id="badge-trace">0</span>
             </button>
-            <button class="tab-btn" data-tab="stats" data-i18n="tabs.stats">Stats</button>
             <button class="tab-btn" data-tab="settings" data-i18n="tabs.settings">Settings</button>
         </nav>
 
@@ -42,83 +41,122 @@
                     </div>
 
                     <div class="home-time-pill" id="elapsed-time" style="font-variant-numeric: tabular-nums">00:00</div>
-                    <button class="home-time-pill" id="btn-view-site" data-i18n="recorder.view_site" disabled>VIEW DETAILS</button>
                 </div>
             </div>
 
-            <div class="tab-panel" id="tab-sitemap">
-                <div class="search-box">
-                    <input type="text" id="sitemap-search" data-i18n="sitemap.search_placeholder" data-i18n-attr="placeholder" placeholder="Search site..." />
+            <div class="tab-panel" id="tab-trace">
+                <div class="trace-toolbar" id="trace-toolbar" style="display:none">
+                    <div class="trace-toolbar-title" data-i18n="trace.sessions">Sessions</div>
+                    <button class="btn btn-ghost btn-sm btn-danger" id="btn-delete-all" data-i18n="trace.delete_all">Delete all</button>
                 </div>
-                <div id="sitemap-list"></div>
-
-                <div class="sitemap-detail" id="sitemap-detail" style="display:none">
-                    <div class="row-between" style="margin-bottom:8px">
-                        <button class="btn btn-ghost btn-sm" id="btn-back-sitemap" data-i18n="sitemap.back">Back</button>
-                        <span class="badge badge-gray" id="sitemap-hostname"></span>
+                <div class="search-box" id="trace-search-box">
+                    <input type="text" id="trace-search" data-i18n="trace.search_placeholder" data-i18n-attr="placeholder" placeholder="Search sessions..." />
+                </div>
+                <div id="trace-empty" style="display:none">
+                    <div class="empty">
+                        <div class="empty-title" data-i18n="common.no_data">No data yet</div>
                     </div>
-                    <div class="card" style="margin-bottom:8px">
-                        <div class="detail-title" id="sitemap-site-name">—</div>
-                        <div class="detail-meta">
-                            <span id="sitemap-session-count">0</span>
-                            <span id="sitemap-step-count">0</span>
+                </div>
+                <div id="trace-list"></div>
+
+                <div class="trace-detail" id="trace-detail" style="display:none">
+                    <div class="detail-top">
+                        <button class="btn btn-ghost btn-sm btn-icon" id="btn-back-trace" data-i18n="trace.back" title="Back">←</button>
+                        <div class="detail-actions">
+                            <button class="btn btn-ghost btn-sm" id="btn-copy-export" data-i18n="trace.export_copy">COPY</button>
+                            <button class="btn btn-ghost btn-sm" id="btn-export-json" data-i18n="trace.export_json">Download JSON</button>
+                            <button class="btn btn-ghost btn-sm" id="btn-export-md" data-i18n="trace.export_md">Download MD</button>
                         </div>
-                        <select class="field" id="sitemap-session-select"></select>
                     </div>
 
                     <div class="toggle-group detail-tabs">
-                        <button class="toggle-btn active" data-site-tab="steps" data-i18n="details.tab_steps">Steps</button>
-                        <button class="toggle-btn" data-site-tab="networks" data-i18n="details.tab_networks">Networks</button>
-                        <button class="toggle-btn" data-site-tab="images" data-i18n="details.tab_images">Images</button>
+                        <button class="toggle-btn active" data-trace-tab="steps" data-i18n="details.tab_steps">Steps</button>
+                        <button class="toggle-btn" data-trace-tab="networks" data-i18n="details.tab_networks">Networks</button>
+                        <button class="toggle-btn" data-trace-tab="images" data-i18n="details.tab_images">Images</button>
                     </div>
 
-                    <div class="detail-panel active" id="site-steps"></div>
-                    <div class="detail-panel" id="site-networks"></div>
-                    <div class="detail-panel" id="site-images"></div>
-                </div>
-            </div>
-
-            <div class="tab-panel" id="tab-stats">
-                <div id="stats-skeleton">
-                    <div class="chart-wrap">
-                        <div class="chart-title" data-i18n="stats.skeleton_project">Allocated by Project</div>
-                        <div class="skeleton" style="height: 120px"></div>
-                    </div>
-                    <div class="skeleton" style="height: 200px; border-radius: 8px"></div>
-                </div>
-
-                <div id="stats-content" style="display:none">
-                    <div class="chart-wrap">
-                        <canvas id="chart-bar" height="120"></canvas>
-                    </div>
-                    <div class="chart-wrap" style="display:flex;gap:12px;align-items:center">
-                        <canvas id="chart-pie" width="100" height="100" style="flex-shrink:0"></canvas>
-                        <div id="chart-legend" style="font-size:11px;line-height:1.8"></div>
-                    </div>
-
-                    <div style="overflow-x:auto">
-                        <table class="stats-table" id="stats-table">
-                            <thead>
-                                <tr>
-                                    <th data-col="displayName"><span data-i18n="stats.col_project">Project</span> <span class="sort-arrow"></span></th>
-                                    <th data-col="sessionCount"><span data-i18n="stats.col_sessions">Sessions</span> <span class="sort-arrow"></span></th>
-                                    <th data-col="stepCount"><span data-i18n="stats.col_steps">Steps</span> <span class="sort-arrow"></span></th>
-                                    <th data-col="errorCount"><span data-i18n="stats.col_errors">Errors</span> <span class="sort-arrow"></span></th>
-                                </tr>
-                            </thead>
-                            <tbody id="stats-tbody"></tbody>
-                        </table>
-                    </div>
-
-                    <div class="divider"></div>
-                    <button class="btn btn-ghost btn-sm btn-full" id="btn-clear" style="color:var(--danger)" data-i18n="stats.btn_clear">Clear all data</button>
+                    <div class="detail-panel active" id="trace-steps"></div>
+                    <div class="detail-panel" id="trace-networks"></div>
+                    <div class="detail-panel" id="trace-images"></div>
                 </div>
             </div>
 
             <div class="tab-panel" id="tab-settings">
-                <div class="card">
-                    <div class="section-label" data-i18n="settings.title">Settings</div>
-                    <div style="font-size:12px;color:var(--text-muted);line-height:1.5" data-i18n="settings.desc">This section will contain preferences and advanced options.</div>
+                <div class="card settings-card">
+                    <div class="section-label" data-i18n="settings.step_title">Step / UI Filters</div>
+                    <div class="settings-desc" data-i18n="settings.presets_desc">Quick toggles for UI frameworks that generate overlay/tooltip noise.</div>
+                    <div class="settings-checks">
+                        <label class="check-row"><input type="checkbox" data-preset="ant" /> <span data-i18n="settings.preset_ant">Ant Design</span></label>
+                        <label class="check-row"><input type="checkbox" data-preset="mui" /> <span data-i18n="settings.preset_mui">MUI</span></label>
+                        <label class="check-row"><input type="checkbox" data-preset="radix" /> <span data-i18n="settings.preset_radix">Radix UI</span></label>
+                        <label class="check-row"><input type="checkbox" data-preset="headlessUi" /> <span data-i18n="settings.preset_headlessui">Headless UI</span></label>
+                        <label class="check-row"><input type="checkbox" data-preset="tailwindUi" /> <span data-i18n="settings.preset_tailwindui">Tailwind UI</span></label>
+                        <label class="check-row"><input type="checkbox" data-preset="shopify" /> <span data-i18n="settings.preset_shopify">Shopify Polaris</span></label>
+                    </div>
+                </div>
+
+                <div class="card settings-card">
+                    <div class="section-label" data-i18n="settings.network_title">Network Rules</div>
+                    <div class="settings-desc" data-i18n="settings.network_desc">Control which network calls are captured and how much data is stored.</div>
+
+                    <label class="settings-label" data-i18n="settings.network_presets">Network presets</label>
+                    <div class="settings-checks settings-checks-3">
+                        <label class="check-row"><input type="checkbox" data-net-preset="sentry" /> <span data-i18n="settings.net_preset_sentry">Sentry</span></label>
+                        <label class="check-row"><input type="checkbox" data-net-preset="segment" /> <span data-i18n="settings.net_preset_segment">Segment</span></label>
+                        <label class="check-row"><input type="checkbox" data-net-preset="mixpanel" /> <span data-i18n="settings.net_preset_mixpanel">Mixpanel</span></label>
+                    </div>
+
+                    <label class="settings-label" data-i18n="settings.blocked_hosts">Blocked hosts (patterns)</label>
+                    <textarea class="field" id="net-blocked-hosts" rows="3" data-i18n="settings.blocked_hosts_ph" data-i18n-attr="placeholder" placeholder="analytics.google.com, doubleclick"></textarea>
+
+                    <label class="settings-label" data-i18n="settings.ignore_urls">Ignore URL patterns</label>
+                    <textarea class="field" id="net-ignore-urls" rows="3" data-i18n="settings.ignore_urls_ph" data-i18n-attr="placeholder" placeholder="\\.svg$, tracking"></textarea>
+
+                    <label class="settings-label" data-i18n="settings.ignore_exts">Ignore extensions</label>
+                    <input class="field" id="net-ignore-exts" data-i18n="settings.ignore_exts_ph" data-i18n-attr="placeholder" placeholder="png, jpg, svg, css" />
+
+                    <div class="settings-grid settings-grid-2">
+                        <div>
+                            <label class="settings-label" data-i18n="settings.ignore_methods">Ignore methods</label>
+                            <input class="field" id="net-ignore-methods" data-i18n="settings.ignore_methods_ph" data-i18n-attr="placeholder" placeholder="OPTIONS, HEAD" />
+                        </div>
+                        <div>
+                            <label class="settings-label" data-i18n="settings.capture_methods">Capture body methods</label>
+                            <input class="field" id="net-capture-methods" data-i18n="settings.capture_methods_ph" data-i18n-attr="placeholder" placeholder="POST, PUT, PATCH" />
+                        </div>
+                    </div>
+
+                    <div class="settings-grid settings-grid-3">
+                        <div>
+                            <label class="settings-label" data-i18n="settings.max_url">Max URL length</label>
+                            <input class="field" id="net-max-url" type="number" min="80" step="10" />
+                        </div>
+                        <div>
+                            <label class="settings-label" data-i18n="settings.max_body">Max body length</label>
+                            <input class="field" id="net-max-body" type="number" min="200" step="50" />
+                        </div>
+                        <div>
+                            <label class="settings-label" data-i18n="settings.max_form_keys">Max form keys</label>
+                            <input class="field" id="net-max-form-keys" type="number" min="5" step="1" />
+                        </div>
+                    </div>
+
+                    <div class="settings-actions">
+                        <button class="btn btn-ghost btn-sm" id="net-reset" data-i18n="settings.reset">Reset</button>
+                        <div class="settings-status" id="net-status"></div>
+                        <button class="btn btn-primary btn-sm" id="net-save" data-i18n="settings.save">Save</button>
+                    </div>
+                </div>
+
+                <div class="card settings-card">
+                    <div class="section-label" data-i18n="settings.config_title">Config Share</div>
+                    <div class="settings-desc" data-i18n="settings.config_desc">Export or import a rule set to share with your team.</div>
+                    <textarea class="field" id="config-json" rows="5" data-i18n="settings.config_ph" data-i18n-attr="placeholder" placeholder="{...}"></textarea>
+                    <div class="settings-actions">
+                        <button class="btn btn-ghost btn-sm" id="config-export" data-i18n="settings.export">Export</button>
+                        <div class="settings-status" id="config-status"></div>
+                        <button class="btn btn-primary btn-sm" id="config-import" data-i18n="settings.import">Import</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -127,21 +165,15 @@
             <div class="image-modal-backdrop" id="image-modal-backdrop"></div>
             <div class="image-modal-card">
                 <div class="image-modal-toolbar">
-                    <button class="btn btn-ghost btn-sm" id="image-modal-open" data-i18n="sitemap.open_window">Open Window</button>
-                    <div class="row" style="gap:6px">
-                        <button class="btn btn-ghost btn-sm" id="image-modal-pen" data-i18n="sitemap.pen">Pen</button>
-                        <button class="btn btn-ghost btn-sm" id="image-modal-clear" data-i18n="sitemap.clear">Clear</button>
-                        <button class="btn btn-primary btn-sm" id="image-modal-save" data-i18n="sitemap.save">Save</button>
-                    </div>
+                    <button class="btn btn-ghost btn-sm" id="image-modal-open" data-i18n="trace.open_window">Open Editor</button>
+                    <button class="btn btn-ghost btn-sm" id="image-modal-close" data-i18n="trace.close">Close</button>
                 </div>
-                <div class="image-modal-stage">
+                <div class="image-modal-stage" id="image-modal-stage">
                     <img id="image-modal-img" alt="screenshot" />
-                    <canvas id="image-modal-canvas"></canvas>
                 </div>
-                <textarea class="field" id="image-modal-note" rows="2" data-i18n="sitemap.image_note" data-i18n-attr="placeholder" placeholder="Add a note for this image..."></textarea>
+                <textarea class="field" id="image-modal-note" rows="2" data-i18n="trace.image_note" data-i18n-attr="placeholder" placeholder="Add a note for this image..."></textarea>
                 <div class="row-between" style="margin-top:6px">
                     <span id="image-modal-time" style="font-size:11px;color:var(--text-subtle)"></span>
-                    <button class="btn btn-ghost btn-sm" id="image-modal-close" data-i18n="sitemap.close">Close</button>
                 </div>
             </div>
         </div>

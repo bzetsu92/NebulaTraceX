@@ -1,13 +1,3 @@
-/**
- * Lightweight screenshot capture via chrome.tabs.captureVisibleTab.
- * Called from the background service worker (content script sends request).
- * Returns compressed base64 JPEG (<100KB target).
- */
-
-/**
- * Request a screenshot from the background worker.
- * @returns {Promise<string>} base64 data URL
- */
 export async function captureScreenshot() {
     return new Promise((resolve, reject) => {
         const timeout = setTimeout(() => reject(new Error('Screenshot timeout')), 3000);

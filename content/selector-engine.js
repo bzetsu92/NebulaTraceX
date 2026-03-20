@@ -1,41 +1,50 @@
-/**
- * Ultra-stable CSS selector generator.
- * Priority: data-testid > id > aria-label > class chain > xpath fallback.
- * Goal: generate selectors that survive minor DOM refactors.
- */
-
-/**
- * Generate the most stable selector for a given element.
- * @param {HTMLElement} el
- * @returns {{ selector: string, strategy: string }}
- */
 export function getSelector(el) {
     if (!el || el === document.body) return { selector: 'body', strategy: 'tag' };
 
-    for (const attr of ['data-testid', 'data-cy', 'data-qa', 'data-id', 'data-test']) {
+    const dataAttrs = globalThis.__nebulaTraceXConsts?.dataTestAttrs
+        || globalThis.__nebulaTraceXConsts?.DATA_TEST_ATTRS
+        || [];
+    for (const attr of dataAttrs) {
         const val = el.getAttribute(attr);
-        if (val && isUnique(`[${attr}="${CSS.escape(val)}"]`)) {
-            return { selector: `[${attr}="${CSS.escape(val)}"]`, strategy: attr };
+        if (val) {
+            const s = `[${attr}="${CSS.escape(val)}"]`;
+            if (isUnique(el, s)) return { selector: s, strategy: attr };
         }
     }
 
-    if (el.id && !isGeneratedId(el.id) && isUnique(`#${CSS.escape(el.id)}`)) {
-        return { selector: `#${CSS.escape(el.id)}`, strategy: 'id' };
+    if (el.id && !isGeneratedId(el.id)) {
+        const s = `#${CSS.escape(el.id)}`;
+        if (isUnique(el, s)) return { selector: s, strategy: 'id' };
     }
 
     const ariaLabel = el.getAttribute('aria-label');
     if (ariaLabel) {
         const s = `${el.tagName.toLowerCase()}[aria-label="${CSS.escape(ariaLabel)}"]`;
-        if (isUnique(s)) return { selector: s, strategy: 'aria-label' };
+        if (isUnique(el, s)) return { selector: s, strategy: 'aria-label' };
+    }
+
+    const title = el.getAttribute('title');
+    if (title) {
+        const s = `${el.tagName.toLowerCase()}[title="${CSS.escape(title)}"]`;
+        if (isUnique(el, s)) return { selector: s, strategy: 'title' };
+    }
+
+    const role = el.getAttribute('role');
+    if (role) {
+        const name = el.getAttribute('aria-label') || el.getAttribute('aria-labelledby') || el.getAttribute('name') || '';
+        if (name) {
+            const s = `${el.tagName.toLowerCase()}[role="${CSS.escape(role)}"][aria-label="${CSS.escape(name)}"]`;
+            if (isUnique(el, s)) return { selector: s, strategy: 'role+name' };
+        }
     }
 
     if (el.name && ['INPUT', 'SELECT', 'TEXTAREA', 'BUTTON'].includes(el.tagName)) {
         const s = `${el.tagName.toLowerCase()}[name="${CSS.escape(el.name)}"]`;
-        if (isUnique(s)) return { selector: s, strategy: 'name' };
+        if (isUnique(el, s)) return { selector: s, strategy: 'name' };
     }
 
     const classSelector = buildClassSelector(el);
-    if (classSelector && isUnique(classSelector)) {
+    if (classSelector && isUnique(el, classSelector)) {
         return { selector: classSelector, strategy: 'class' };
     }
 
@@ -45,8 +54,10 @@ export function getSelector(el) {
     return { selector: getXPath(el), strategy: 'xpath' };
 }
 
-function isUnique(selector) {
+function isUnique(el, selector) {
     try {
+        const first = document.querySelector(selector);
+        if (first !== el) return false;
         return document.querySelectorAll(selector).length === 1;
     } catch { return false; }
 }

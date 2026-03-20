@@ -24,6 +24,7 @@ export const Sessions = {
 
     async get(id) { return DB.get('sessions', id); },
     async getAll() { return DB.getAll('sessions'); },
+    async delete(id) { return DB.delete('sessions', id); },
 
     async addNote(sessionId, note) {
         const s = await DB.get('sessions', sessionId);
@@ -50,6 +51,7 @@ export const Steps = {
         return DB.add('steps', { ...step, timestamp: Date.now() });
     },
     async get(id) { return DB.get('steps', id); },
+    async delete(id) { return DB.delete('steps', id); },
     async update(id, patch) {
         const existing = await DB.get('steps', id);
         if (!existing) return null;
@@ -79,6 +81,15 @@ export const Steps = {
         return DB.getByIndex('steps', 'sessionId', sessionId);
     },
     async getAll() { return DB.getAll('steps'); },
+    async recountSession(sessionId) {
+        const steps = await DB.getByIndex('steps', 'sessionId', sessionId);
+        const s = await DB.get('sessions', sessionId);
+        if (s) await DB.put('sessions', { ...s, stepCount: countUserSteps(steps) });
+    },
+    async deleteBySession(sessionId) {
+        const steps = await DB.getByIndex('steps', 'sessionId', sessionId);
+        await Promise.all(steps.map(s => DB.delete('steps', s.id)));
+    },
 };
 
 export const Errors = {
@@ -91,8 +102,25 @@ export const Errors = {
     async getAll() {
         return DB.getAll('errors');
     },
+    async deleteBySession(sessionId) {
+        const errs = await DB.getByIndex('errors', 'sessionId', sessionId);
+        await Promise.all(errs.map(e => DB.delete('errors', e.id)));
+    },
 };
 
 function safeHostname(url) {
     try { return new URL(url).hostname; } catch { return 'unknown'; }
+}
+
+function countUserSteps(steps = []) {
+    return steps.filter(s => !isNetworkStep(s) && !s.screenshot).length;
+}
+
+function isNetworkStep(step) {
+    if (!step) return false;
+    if (step.type === 'network') return true;
+    if (step.action === 'api_call') return true;
+    if (step.method || step.status) return true;
+    if (step.url && !['navigate', 'navigation', 'pageload'].includes(step.type)) return true;
+    return false;
 }

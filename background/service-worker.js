@@ -1,5 +1,5 @@
 import { DB } from '../storage/db.js';
-import { Sessions, Steps } from '../storage/sessions.js';
+import { Sessions, Steps, Errors } from '../storage/sessions.js';
 import { Projects } from '../storage/projects.js';
 
 
@@ -26,7 +26,7 @@ async function handleMessage(msg, sender) {
 
             await chrome.scripting.executeScript({
                 target: { tabId: tab.id },
-                files: ['content/recorder.js'],
+                files: ['content/constants.js', 'content/recorder.js'],
             }).catch(() => null);
 
             await chrome.scripting.executeScript({
@@ -50,6 +50,14 @@ async function handleMessage(msg, sender) {
             }).catch(() => null);
 
             await Sessions.end(state.sessionId);
+            const steps = await Steps.getBySession(state.sessionId);
+            if (!steps || steps.length === 0) {
+                await Steps.deleteBySession(state.sessionId);
+                await Errors.deleteBySession(state.sessionId);
+                await Sessions.delete(state.sessionId);
+                tabState.set(tab.id, { recording: false, sessionId: null });
+                return { ok: true, sessionId: null, deleted: true };
+            }
             tabState.set(tab.id, { ...state, recording: false });
             return { ok: true, sessionId: state.sessionId };
         }
@@ -60,7 +68,14 @@ async function handleMessage(msg, sender) {
                 return { ok: true };
             }
             await Steps.addBatch(sessionId, steps);
-            await Sessions.incrementSteps(sessionId, steps.length);
+            const userSteps = steps.filter(s =>
+                s && s.type !== 'network' &&
+                s.action !== 'api_call' &&
+                !s.screenshot &&
+                !(s.method || s.status) &&
+                !(s.url && !['navigate', 'navigation', 'pageload'].includes(s.type))
+            );
+            await Sessions.incrementSteps(sessionId, userSteps.length);
             return { ok: true };
         }
 
@@ -91,7 +106,7 @@ async function handleMessage(msg, sender) {
                 screenshot: msg.screenshot,
                 timestamp: Date.now(),
             });
-            if (created) await Sessions.incrementSteps(msg.sessionId, 1);
+            if (created) await Sessions.incrementSteps(msg.sessionId, 0);
             return { ok: true, created: true };
         }
 
@@ -169,14 +184,13 @@ chrome.tabs.onUpdated.addListener((tabId, info) => {
     const state = tabState.get(tabId);
     if (!state?.recording) return;
     if (info.status === 'loading') {
-        // Keep recording across navigations. We'll re-inject on complete.
         return;
     }
-    if (info.status === 'complete') {
-        chrome.scripting.executeScript({
-            target: { tabId },
-            files: ['content/recorder.js'],
-        }).catch(() => null);
+        if (info.status === 'complete') {
+            chrome.scripting.executeScript({
+                target: { tabId },
+                files: ['content/constants.js', 'content/recorder.js'],
+            }).catch(() => null);
         chrome.scripting.executeScript({
             target: { tabId },
             func: (sid) => window.__nebulaTraceX?.start(sid),
@@ -200,7 +214,7 @@ async function startRecordingOnActiveTab() {
 
     await chrome.scripting.executeScript({
         target: { tabId: tab.id },
-        files: ['content/recorder.js'],
+        files: ['content/constants.js', 'content/recorder.js'],
     }).catch(() => null);
 
     await chrome.scripting.executeScript({

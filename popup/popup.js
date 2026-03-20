@@ -1,10 +1,11 @@
-import { initRecorderTab, renderRecentSteps } from './tabs/recorder-tab.js';
-import { initSitemapTab, openSiteBySessionId } from './tabs/sitemap-tab.js';
-import { initStatsTab } from './tabs/stats-tab.js';
-import { Sessions, Steps } from '../storage/sessions.js';
+import { initRecorderTab } from './tabs/recorder-tab.js';
+import { initTraceTab, openSessionById } from './tabs/trace-tab.js';
+import { initSettingsTab } from './tabs/settings-tab.js';
+import { Sessions } from '../storage/sessions.js';
 import { translateDOM } from './i18n.js';
 
-let sitemap = null;
+let trace = null;
+let settings = null;
 
 function initTheme() {
     const saved = localStorage.getItem('br-theme') || 'light';
@@ -58,19 +59,18 @@ async function main() {
     initSideCarousel();
 
     const recorder = initRecorderTab(onStepsUpdate, (sessionId) => {
-        const btn = document.querySelector('.tab-btn[data-tab="sitemap"]');
+        const btn = document.querySelector('.tab-btn[data-tab="trace"]');
         btn?.click();
-        openSiteBySessionId(sessionId);
+        openSessionById(sessionId);
     });
-    sitemap = initSitemapTab();
-    const stats = initStatsTab();
-
+    trace = initTraceTab();
+    settings = initSettingsTab();
     initTabs(async (tabId) => {
-        if (tabId === 'sitemap') {
-            await sitemap.refreshSites();
+        if (tabId === 'trace') {
+            await trace.refreshSessions();
         }
-        if (tabId === 'stats') {
-            await stats.loadStats();
+        if (tabId === 'settings') {
+            await settings?.load?.();
         }
     });
 
@@ -80,7 +80,7 @@ async function main() {
             tag === 'input' || tag === 'textarea' || tag === 'select' || e.target?.isContentEditable;
         if (isTypingContext) return;
         if (!e.altKey) return;
-        const map = { '1': 'home', '2': 'sitemap', '3': 'stats', '4': 'settings' };
+        const map = { '1': 'home', '2': 'trace', '3': 'settings' };
         const tabId = map[e.key];
         if (!tabId) return;
         e.preventDefault();
@@ -89,7 +89,7 @@ async function main() {
     });
 
     await onStepsUpdate();
-    if (sitemap) await sitemap.refreshSites();
+    if (trace) await trace.refreshSessions();
 }
 
 async function onStepsUpdate(sessionId) {
@@ -101,9 +101,7 @@ async function onStepsUpdate(sessionId) {
         }
         if (!sessionId) return;
 
-        const steps = await Steps.getBySession(sessionId);
-        renderRecentSteps(steps);
-        if (sitemap) await sitemap.refreshSites();
+        if (trace) await trace.refreshSessions();
 
     } catch (e) {
         console.warn('[NebulaTraceX popup]', e);
